@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SECCOM 2025 | Admin — Restricted</title>
+<link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Brainware_University.svg/250px-Brainware_University.svg.png">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   DESIGN SYSTEM
+═══════════════════════════════════════════════════════════ */
+:root {
+  --bg:         #05080f;
+  --bg2:        #080d1a;
+  --surface:    rgba(255,255,255,0.035);
+  --surface2:   rgba(255,255,255,0.07);
+  --surface3:   rgba(255,255,255,0.11);
+  --border:     rgba(255,255,255,0.08);
+  --border2:    rgba(255,255,255,0.14);
+  --accent:     #6366f1;    /* indigo */
+  --accent2:    #22d3ee;    /* cyan */
+  --accent3:    #f59e0b;    /* amber */
+  --success:    #10b981;
+  --danger:     #f43f5e;
+  --warning:    #fb923c;
+  --text:       #f1f5f9;
+  --text2:      #94a3b8;
+  --text3:      #475569;
+  --gold:       #fbbf24;
+  --silver:     #cbd5e1;
+  --bronze:     #b45309;
+  --glow-a:     rgba(99,102,241,0.35);
+  --glow-c:     rgba(34,211,238,0.3);
+  --glow-s:     rgba(16,185,129,0.3);
+  --r-xl:       20px;
+  --r-lg:       14px;
+  --r-md:       10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-size: 15px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Background pulse orbs */
+body::before, body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(100px);
+  animation: orbFloat 12s ease-in-out infinite alternate;
+}
+body::before {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(99,102,241,0.12), transparent 70%);
+  top: -200px; left: -100px;
+}
+body::after {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(34,211,238,0.08), transparent 70%);
+  bottom: -100px; right: -100px;
+  animation-delay: 4s;
+}
+@keyframes orbFloat { from { transform: translate(0,0) scale(1); } to { transform: translate(40px,30px) scale(1.1); } }
+
+/* ── Glass ── */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--border);
+}
+.glass-strong {
+  background: var(--surface2);
+  backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid var(--border2);
+}
+
+/* ═══════════════════ LOGIN ═══════════════════ */
+#login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+}
+.login-wrap {
+  width: 100%;
+  max-width: 440px;
+}
+.login-card {
+  background: rgba(10,14,28,0.85);
+  backdrop-filter: blur(40px);
+  border: 1px solid var(--border2);
+  border-radius: 28px;
+  padding: 48px 40px;
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.1), 0 40px 80px rgba(0,0,0,0.7);
+  position: relative;
+  overflow: hidden;
+}
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.login-logo {
+  width: 68px; height: 68px;
+  border-radius: 18px;
+  border: 1px solid var(--border2);
+  margin-bottom: 24px;
+  filter: drop-shadow(0 0 12px rgba(99,102,241,0.4));
+}
+.login-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; }
+.login-sub { color: var(--text2); font-size: 0.9rem; margin-bottom: 36px; }
+.login-title .hi { background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.secure-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.25);
+  color: #fb7185; border-radius: 8px; padding: 6px 12px;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 28px;
+}
+
+/* ── Form Fields ── */
+.field { margin-bottom: 18px; }
+.field label {
+  display: block; font-size: 0.72rem; font-weight: 700;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+}
+.input-wrap { position: relative; }
+.input-wrap i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 0.85rem; }
+.field input, .field textarea, .field select {
+  width: 100%;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  padding: 12px 16px 12px 42px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: 'Outfit', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field textarea { padding-left: 16px; min-height: 80px; resize: vertical; }
+.field select { padding-left: 16px; }
+.field input:focus, .field textarea:focus, .field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
+}
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 20px; border: none; border-radius: var(--r-md);
+  font-size: 0.88rem; font-weight: 700; font-family: 'Outfit', sans-serif;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap; letter-spacing: 0.01em;
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+.btn-full { width: 100%; }
+.btn-indigo { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; box-shadow: 0 6px 20px rgba(99,102,241,0.35); }
+.btn-indigo:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(99,102,241,0.5); }
+.btn-cyan { background: linear-gradient(135deg,#22d3ee,#0891b2); color: #fff; box-shadow: 0 6px 20px rgba(34,211,238,0.25); }
+.btn-cyan:hover:not(:disabled) { transform: translateY(-2px); }
+.btn-green { background: linear-gradient(135deg,#10b981,#059669); color: #fff; box-shadow: 0 6px 20px rgba(16,185,129,0.28); }
+.btn-green:hover:not(:disabled) { transform: translateY(-2px); }
+.btn-red { background: linear-gradient(135deg,#f43f5e,#dc2626); color: #fff; }
+.btn-red:hover:not(:disabled) { transform: translateY(-2px); }
+.btn-amber { background: linear-gradient(135deg,#f59e0b,#d97706); color: #fff; }
+.btn-amber:hover:not(:disabled) { transform: translateY(-2px); }
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface3); }
+.btn-sm { padding: 7px 13px; font-size: 0.78rem; border-radius: 8px; }
+.btn-xs { padding: 5px 10px; font-size: 0.72rem; border-radius: 7px; }
+
+/* ── Spinner ── */
+.spin-ring {
+  display: inline-block; width: 17px; height: 17px;
+  border: 2px solid rgba(255,255,255,0.25); border-left-color: #fff;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════ DASHBOARD ═══════════════════ */
+#dashboard-screen { display: none; flex-direction: column; min-height: 100vh; position: relative; z-index: 1; }
+#dashboard-screen.visible { display: flex; }
+
+/* ── Topbar ── */
+.topbar {
+  background: rgba(5,8,15,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 200;
+}
+.topbar-brand { display: flex; align-items: center; gap: 12px; }
+.topbar-brand img { width: 32px; height: 32px; border-radius: 8px; }
+.topbar-brand .name { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; }
+.topbar-brand .name span { color: var(--accent2); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.live-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 20px; padding: 5px 13px; font-size: 0.78rem; font-weight: 700; color: var(--success);
+}
+.live-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; animation: blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.icon-btn {
+  width: 34px; height: 34px; border: 1px solid var(--border2); border-radius: 9px;
+  background: var(--surface); color: var(--text2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 0.82rem;
+  transition: all 0.2s;
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+/* ── Side nav ── */
+.layout { display: flex; flex: 1; overflow: hidden; }
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: rgba(8,13,26,0.8);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.nav-section-label {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--text3); padding: 14px 10px 6px;
+}
+.nav-btn {
+  width: 100%; padding: 9px 12px; border: none; border-radius: 9px;
+  background: transparent; color: var(--text2); cursor: pointer;
+  display: flex; align-items: center; gap: 10px; font-size: 0.86rem;
+  font-weight: 600; font-family: 'Outfit', sans-serif; transition: all 0.18s; text-align: left;
+}
+.nav-btn i { width: 16px; text-align: center; font-size: 0.82rem; }
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.active { background: rgba(99,102,241,0.15); color: var(--accent); border: 1px solid rgba(99,102,241,0.2); }
+.nav-btn.active i { filter: drop-shadow(0 0 5px var(--accent)); }
+
+/* ── Main content ── */
+.content { flex: 1; overflow-y: auto; padding: 28px; }
+
+/* ── Section cards ── */
+.section { display: none; animation: fadeUp 0.3s ease; }
+.section.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.section-head { margin-bottom: 24px; }
+.section-tag {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.15em; color: var(--accent2); margin-bottom: 4px;
+}
+.section-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+.section-sub { color: var(--text2); font-size: 0.85rem; margin-top: 4px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 22px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(16px);
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border2); }
+.card-title {
+  font-size: 0.92rem; font-weight: 700; margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.card-title i { color: var(--accent); margin-right: 2px; }
+
+/* ── Stats row ── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px;
+  display: flex; align-items: center; gap: 14px;
+  transition: all 0.2s;
+}
+.stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.stat-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+}
+.si-indigo { background: rgba(99,102,241,0.15); color: var(--accent); }
+.si-cyan   { background: rgba(34,211,238,0.12); color: var(--accent2); }
+.si-green  { background: rgba(16,185,129,0.12); color: var(--success); }
+.si-amber  { background: rgba(245,158,11,0.12); color: var(--accent3); }
+.si-red    { background: rgba(244,63,94,0.12); color: var(--danger); }
+.stat-val { font-size: 1.6rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-lbl { font-size: 0.72rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; font-weight: 600; }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 11px 16px; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.09em; color: var(--text2);
+  background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); white-space: nowrap;
+  cursor: pointer; user-select: none; transition: color 0.2s;
+}
+thead th:hover { color: var(--text); }
+tbody td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.86rem; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.15s; }
+tbody tr:hover td { background: rgba(255,255,255,0.025); }
+
+/* ── Rank badges ── */
+.rank-badge {
+  width: 28px; height: 28px; border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.82rem;
+}
+.r1 { background: rgba(251,191,36,0.2); color: var(--gold); }
+.r2 { background: rgba(203,213,225,0.15); color: var(--silver); }
+.r3 { background: rgba(180,83,9,0.2); color: var(--bronze); }
+.rn { background: var(--surface2); color: var(--text2); }
+.score-chip {
+  display: inline-block; padding: 4px 12px; border-radius: 20px;
+  font-size: 0.8rem; font-weight: 700;
+  background: linear-gradient(135deg,var(--accent),var(--accent2));
+  color: #fff;
+}
+.tier-chip {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 0.7rem; font-weight: 700;
+  background: rgba(99,102,241,0.15); color: var(--accent);
+  border: 1px solid rgba(99,102,241,0.25);
+}
+.flag-mono {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  color: var(--accent2); background: rgba(34,211,238,0.08);
+  padding: 3px 8px; border-radius: 6px; max-width: 200px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;
+}
+.result-pill { display: inline-block; padding: 3px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+.rp-correct { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.25); }
+.rp-wrong   { background: rgba(244,63,94,0.12); color: var(--danger); border: 1px solid rgba(244,63,94,0.22); }
+.rp-rabbit  { background: rgba(245,158,11,0.12); color: var(--accent3); border: 1px solid rgba(245,158,11,0.22); }
+
+/* ── Progress bar ── */
+.prog-bar-wrap { height: 54px; background: var(--surface2); border-radius: 10px; overflow: hidden; position: relative; margin-bottom: 10px; }
+.prog-seg { position: absolute; top: 0; height: 100%; display: flex; align-items: center; justify-content: center; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+.prog-seg span { font-size: 0.78rem; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.prog-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.prog-stat { text-align: center; background: var(--surface); border-radius: 10px; padding: 10px 6px; }
+.prog-stat-val { font-size: 1.3rem; font-weight: 800; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.prog-stat-lbl { font-size: 0.65rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; font-weight: 600; }
+
+/* ── Charts ── */
+.chart-area { position: relative; height: 260px; }
+
+/* ── Game control ── */
+.ctrl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:640px) { .ctrl-grid { grid-template-columns: 1fr; } }
+.ctrl-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; }
+.ctrl-label { font-size: 0.8rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+.tier-big { font-size: 3.5rem; font-weight: 900; text-align: center; line-height: 1; letter-spacing: -0.03em; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; padding: 8px 0; }
+.tier-row { display: flex; gap: 8px; margin-top: 10px; }
+.tier-row input {
+  flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 9px 12px; color: var(--text);
+  font-family: 'JetBrains Mono',monospace; font-size: 1rem; outline: none;
+}
+.tier-row input:focus { border-color: var(--accent); }
+.tier-step { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.game-status { text-align: center; padding: 14px; }
+.status-badge-lg { display: inline-block; padding: 8px 24px; border-radius: 20px; font-weight: 800; font-size: 1rem; }
+
+/* ── Add Team ── */
+.steps { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:640px) { .steps { grid-template-columns: 1fr; } }
+.step-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 20px; position: relative;
+}
+.step-badge {
+  width: 28px; height: 28px; border-radius: 50%; font-weight: 800; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+}
+.sb-green { background: rgba(16,185,129,0.2); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+.sb-amber { background: rgba(245,158,11,0.15); color: var(--accent3); border: 1px solid rgba(245,158,11,0.3); }
+.step-title { font-size: 0.92rem; font-weight: 700; margin-bottom: 14px; }
+.instruction-box {
+  background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.2);
+  border-radius: 10px; padding: 14px; margin-bottom: 14px; font-size: 0.83rem;
+  line-height: 1.6; color: var(--text2); display: none;
+}
+.instruction-box strong { color: var(--accent2); }
+
+/* ── Location Map ── */
+.map-layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
+@media(max-width:900px) { .map-layout { grid-template-columns: 1fr; } }
+.map-sidebar { display: flex; flex-direction: column; gap: 10px; max-height: 580px; overflow-y: auto; }
+#map { height: 580px; border-radius: var(--r-lg); border: 1px solid var(--border); z-index: 0; }
+.team-list-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 10px 12px; cursor: pointer; transition: all 0.18s;
+}
+.team-list-item:hover, .team-list-item.selected { border-color: var(--accent); background: rgba(99,102,241,0.08); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 7px; }
+.dot-on { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.dot-off { background: var(--text3); }
+
+/* ── Activity feed ── */
+.feed { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.feed-item {
+  display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; font-size: 0.83rem; transition: border-color 0.2s;
+}
+.feed-item:hover { border-color: var(--border2); }
+.feed-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
+.fi-green { background: rgba(16,185,129,0.15); color: var(--success); }
+.fi-amber { background: rgba(245,158,11,0.12); color: var(--accent3); }
+.fi-blue  { background: rgba(99,102,241,0.12); color: var(--accent); }
+.feed-msg { flex: 1; line-height: 1.4; }
+.feed-time { font-size: 0.7rem; color: var(--text3); margin-top: 2px; }
+
+/* ── QR Generator ── */
+.qr-mode-tabs { display: flex; gap: 6px; background: var(--surface2); border-radius: 12px; padding: 5px; margin-bottom: 20px; }
+.qr-mode-btn { flex: 1; padding: 8px; border: none; border-radius: 9px; background: transparent; color: var(--text2); font-family: 'Outfit',sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+.qr-mode-btn.active { background: var(--surface3); color: var(--text); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+.qr-preview-area { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; max-height: 520px; overflow-y: auto; }
+.print-page-preview { background: white; border-radius: 12px; padding: 40px; margin-bottom: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); color: #111; }
+
+/* ── Leaderboard visibility ── */
+.lb-vis-actions { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.lb-action-card {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.lb-action-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.lb-action-card i { font-size: 1.5rem; margin-bottom: 8px; display: block; }
+
+/* ── Modals ── */
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(10px); display: none; align-items: center;
+  justify-content: center; z-index: 500; padding: 20px;
+}
+.modal.open { display: flex; }
+.modal-card {
+  background: rgba(8,13,26,0.97); border: 1px solid var(--border2);
+  border-radius: 22px; padding: 30px; width: 100%;
+  max-width: 520px; max-height: 90vh; overflow-y: auto; position: relative;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+}
+.modal-card h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 22px; display: flex; align-items: center; gap: 9px; }
+.close-x {
+  position: absolute; top: 16px; right: 16px; width: 30px; height: 30px;
+  background: var(--surface2); border: none; border-radius: 8px;
+  color: var(--text2); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 1rem; transition: all 0.2s;
+}
+.close-x:hover { background: var(--surface3); color: var(--text); }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 600;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 13px 18px; font-size: 0.88rem; font-weight: 600;
+  display: none; animation: toastUp 0.3s ease; box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+  min-width: 260px;
+}
+@keyframes toastUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+#toast.t-success { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); }
+#toast.t-error   { border-color: rgba(244,63,94,0.4);  background: rgba(244,63,94,0.1);  }
+
+/* ── Broadcast section ── */
+.bc-history-item {
+  background: var(--surface2); border-radius: 10px; padding: 12px 16px;
+  margin-bottom: 10px; font-size: 0.86rem; border: 1px solid var(--border);
+}
+
+/* ── Search ── */
+.search-bar {
+  background: rgba(0,0,0,0.35); border: 1px solid var(--border2);
+  border-radius: 9px; padding: 8px 14px 8px 36px; color: var(--text);
+  font-size: 0.85rem; font-family: 'Outfit',sans-serif; outline: none;
+  transition: border-color 0.2s; width: 220px;
+}
+.search-bar:focus { border-color: var(--accent); }
+.search-wrap { position: relative; display: inline-block; }
+.search-wrap i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 0.78rem; }
+
+/* Leaflet popup dark */
+.leaflet-popup-content-wrapper { background: #0f172a; border: 1px solid var(--border2); border-radius: 10px; color: var(--text); }
+.leaflet-popup-tip { background: #0f172a; }
+
+/* Team marker */
+.team-marker {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 800; color: #fff; border: 2px solid #fff;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.5);
+}
+.team-active { background: linear-gradient(135deg,var(--success),#059669); }
+.team-inactive { background: linear-gradient(135deg,var(--text3),var(--text3)); }
+
+/* Search in tables */
+.tbl-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+
+/* Mobile sidebar */
+@media(max-width:768px) {
+  .sidebar { display: none; position: fixed; inset: 60px 0 0; z-index: 150; width: 100%; padding: 12px; }
+  .sidebar.mobile-open { display: flex; }
+  .content { padding: 16px; }
+  .map-layout { grid-template-columns: 1fr; }
+  #map { height: 340px; }
+  .ctrl-grid { grid-template-columns: 1fr; }
+  .field-row { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; }
+  .lb-vis-actions { grid-template-columns: 1fr; }
+  .prog-stats { grid-template-columns: 1fr 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ LOGIN SCREEN ══════════════════ -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <img src="https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Brainware_University.svg/250px-Brainware_University.svg.png" class="login-logo">
+      <h1 class="login-title"><span class="hi">Admin</span> Portal</h1>
+      <p class="login-sub">SECCOM 2025 — Restricted Access Only</p>
+      <div class="secure-badge"><i class="fas fa-shield-halved"></i> Secured Area</div>
+      <div class="field"><label>Email</label><div class="input-wrap"><i class="fas fa-envelope"></i><input id="l-email" type="email" placeholder="admin@seccom2025.local"></div></div>
+      <div class="field"><label>Password</label><div class="input-wrap"><i class="fas fa-lock"></i><input id="l-pass" type="password" placeholder="••••••••"></div></div>
+      <button class="btn btn-indigo btn-full" id="login-btn" onclick="doLogin()"><i class="fas fa-lock-open"></i> Enter Dashboard</button>
+      <div style="color:var(--danger);font-size:.83rem;text-align:center;margin-top:14px;min-height:18px" id="login-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ DASHBOARD ══════════════════ -->
+<div id="dashboard-screen">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <button class="icon-btn" id="menu-btn" style="display:none" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <img src="https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Brainware_University.svg/250px-Brainware_University.svg.png">
+      <div class="name">SECCOM <span>2025</span> <span style="color:var(--text3);font-size:.7rem;font-weight:500">Admin</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><div class="live-dot"></div><span id="live-count">0</span> online</div>
+      <button class="icon-btn" onclick="loadAll()" title="Refresh all"><i class="fas fa-rotate-right"></i></button>
+      <button class="icon-btn" onclick="doLogout()" title="Logout"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-btn active" onclick="nav('overview',this)"><i class="fas fa-gauge-high"></i>Dashboard</button>
+      <button class="nav-btn" onclick="nav('leaderboard',this)"><i class="fas fa-trophy"></i>Leaderboard</button>
+      <button class="nav-btn" onclick="nav('analytics',this)"><i class="fas fa-chart-line"></i>Analytics</button>
+      <div class="nav-section-label">Game</div>
+      <button class="nav-btn" onclick="nav('control',this)"><i class="fas fa-gamepad"></i>Game Control</button>
+      <button class="nav-btn" onclick="nav('broadcast',this)"><i class="fas fa-bullhorn"></i>Broadcast</button>
+      <button class="nav-btn" onclick="nav('lb-visibility',this)"><i class="fas fa-eye"></i>LB Visibility</button>
+      <div class="nav-section-label">Content</div>
+      <button class="nav-btn" onclick="nav('clues',this)"><i class="fas fa-map-pin"></i>Manage Clues</button>
+      <button class="nav-btn" onclick="nav('qr',this)"><i class="fas fa-qrcode"></i>QR Generator</button>
+      <div class="nav-section-label">Teams</div>
+      <button class="nav-btn" onclick="nav('addteam',this)"><i class="fas fa-user-plus"></i>Add Team</button>
+      <button class="nav-btn" onclick="nav('teams',this)"><i class="fas fa-users"></i>All Teams</button>
+      <button class="nav-btn" onclick="nav('submissions',this)"><i class="fas fa-paper-plane"></i>Submissions</button>
+      <div class="nav-section-label">Tracking</div>
+      <button class="nav-btn" onclick="nav('map',this)"><i class="fas fa-map-location-dot"></i>Live Map</button>
+    </nav>
+
+    <!-- Content area -->
+    <main class="content">
+
+      <!-- ── OVERVIEW ── -->
+      <div id="sec-overview" class="section active">
+        <div class="section-head">
+          <div class="section-tag">Dashboard</div>
+          <div class="section-title">Overview</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon si-indigo"><i class="fas fa-users"></i></div><div><div class="stat-val" id="st-teams">—</div><div class="stat-lbl">Teams</div></div></div>
+          <div class="stat-card"><div class="stat-icon si-cyan"><i class="fas fa-wifi"></i></div><div><div class="stat-val" id="st-online">—</div><div class="stat-lbl">Online</div></div></div>
+          <div class="stat-card"><div class="stat-icon si-green"><i class="fas fa-check-circle"></i></div><div><div class="stat-val" id="st-solves">—</div><div class="stat-lbl">Total Solves</div></div></div>
+          <div class="stat-card"><div class="stat-icon si-amber"><i class="fas fa-layer-group"></i></div><div><div class="stat-val" id="st-tier">—</div><div class="stat-lbl">Current Tier</div></div></div>
+          <div class="stat-card"><div class="stat-icon si-red"><i class="fas fa-rabbit"></i></div><div><div class="stat-val" id="st-rabbit">—</div><div class="stat-lbl">Rabbit Holes</div></div></div>
+        </div>
+        <!-- Progress bar -->
+        <div class="card">
+          <div class="card-title"><span><i class="fas fa-bars-progress"></i> Solve Progress</span></div>
+          <div class="prog-bar-wrap" id="prog-bar"></div>
+          <div class="prog-stats" id="prog-stats"></div>
+        </div>
+        <!-- Activity feed -->
+        <div class="card">
+          <div class="card-title"><span><i class="fas fa-bolt"></i> Live Activity Feed</span><button class="btn btn-ghost btn-xs" onclick="loadActivity()"><i class="fas fa-sync-alt"></i></button></div>
+          <div class="feed" id="activity-feed"><div style="text-align:center;padding:30px;color:var(--text3)">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- ── LEADERBOARD ── -->
+      <div id="sec-leaderboard" class="section">
+        <div class="section-head">
+          <div class="section-tag">Rankings</div>
+          <div class="section-title">Live Leaderboard</div>
+        </div>
+        <div class="card">
+          <div class="tbl-toolbar">
+            <div class="search-wrap"><i class="fas fa-search"></i><input class="search-bar" id="lb-search" placeholder="Search team…" oninput="filterLeaderboard()"></div>
+            <button class="btn btn-ghost btn-sm" onclick="exportCSV()"><i class="fas fa-download"></i> Export CSV</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Rank</th><th>Team</th><th>Solved</th><th>R.Holes</th><th>Hints</th><th>Score</th><th>Actions</th></tr></thead>
+              <tbody id="lb-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ANALYTICS ── -->
+      <div id="sec-analytics" class="section">
+        <div class="section-head">
+          <div class="section-tag">Insights</div>
+          <div class="section-title">Analytics</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-chart-line"></i> Score Progression (Top 10 Teams)</div>
+          <div class="chart-area"><canvas id="score-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-chart-bar"></i> Clues Solved Distribution</div>
+          <div class="chart-area"><canvas id="solve-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span><i class="fas fa-map-pin"></i> Clue Difficulty</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Clue Title</th><th>Tier</th><th>Solvers</th><th>Rabbit Holes</th><th>Difficulty</th></tr></thead>
+              <tbody id="clue-analytics-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── GAME CONTROL ── -->
+      <div id="sec-control" class="section">
+        <div class="section-head">
+          <div class="section-tag">Admin</div>
+          <div class="section-title">Game Control</div>
+        </div>
+        <div class="ctrl-grid">
+          <div class="ctrl-card">
+            <div class="ctrl-label"><i class="fas fa-layer-group" style="color:var(--accent)"></i> Clue Tier</div>
+            <div class="tier-big" id="tier-big">—</div>
+            <div class="tier-row">
+              <input type="number" id="tier-inp" min="1" placeholder="Tier #">
+              <button class="btn btn-green btn-sm" onclick="setTier()"><i class="fas fa-check"></i> Set</button>
+            </div>
+            <div class="tier-step">
+              <button class="btn btn-ghost btn-sm" onclick="stepTier(-1)"><i class="fas fa-minus"></i> Prev</button>
+              <button class="btn btn-ghost btn-sm" onclick="stepTier(1)">Next <i class="fas fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="ctrl-card">
+            <div class="ctrl-label"><i class="fas fa-power-off" style="color:var(--success)"></i> Game State</div>
+            <div class="game-status">
+              <div class="status-badge-lg" id="game-status-badge">—</div>
+              <p style="font-size:.8rem;color:var(--text2);margin:10px 0 16px">Controls visibility of the game to all players</p>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button class="btn btn-green" onclick="toggleGame(true)"><i class="fas fa-play"></i> Start</button>
+              <button class="btn btn-red" onclick="toggleGame(false)"><i class="fas fa-pause"></i> Pause</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BROADCAST ── -->
+      <div id="sec-broadcast" class="section">
+        <div class="section-head">
+          <div class="section-tag">Comms</div>
+          <div class="section-title">Broadcast</div>
+          <div class="section-sub">Send real-time announcements to all active players</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-bullhorn"></i> New Broadcast</div>
+          <div class="field"><label>Message</label><textarea id="bc-msg" placeholder="Type your announcement…" rows="4" style="padding-left:16px"></textarea></div>
+          <button class="btn btn-cyan" onclick="sendBroadcast()"><i class="fas fa-paper-plane"></i> Send to All Players</button>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-clock-rotate-left"></i> Broadcast History</div>
+          <div id="bc-history"><div style="color:var(--text3);font-size:.85rem;padding:8px">No broadcasts yet</div></div>
+        </div>
+      </div>
+
+      <!-- ── LEADERBOARD VISIBILITY ── -->
+      <div id="sec-lb-visibility" class="section">
+        <div class="section-head">
+          <div class="section-tag">Control</div>
+          <div class="section-title">Leaderboard Visibility</div>
+          <div class="section-sub">Control what players see on the public leaderboard page</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-eye"></i> Quick Actions</div>
+          <div class="lb-vis-actions">
+            <div class="lb-action-card" onclick="setLbVisibility(false,'','')">
+              <i class="fas fa-eye-slash" style="color:var(--danger)"></i>
+              <div style="font-weight:700;font-size:.9rem">Hide Leaderboard</div>
+              <div style="font-size:.77rem;color:var(--text2);margin-top:4px">Players see a waiting screen</div>
+            </div>
+            <div class="lb-action-card" onclick="setLbVisibility(false,'Coming Soon','Results will be revealed shortly!')">
+              <i class="fas fa-clock" style="color:var(--accent3)"></i>
+              <div style="font-weight:700;font-size:.9rem">Show with Message</div>
+              <div style="font-size:.77rem;color:var(--text2);margin-top:4px">Custom message shown to players</div>
+            </div>
+            <div class="lb-action-card" onclick="setLbVisibility(true,'','')">
+              <i class="fas fa-eye" style="color:var(--success)"></i>
+              <div style="font-weight:700;font-size:.9rem">Show Immediately</div>
+              <div style="font-size:.77rem;color:var(--text2);margin-top:4px">Leaderboard visible now</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-pen"></i> Custom Message</div>
+          <div class="field"><label>Title</label><div class="input-wrap"><i class="fas fa-heading"></i><input id="lb-msg-title" type="text" placeholder="e.g. Results Coming Soon!"></div></div>
+          <div class="field"><label>Content</label><textarea id="lb-msg-content" placeholder="Message to display to players…" rows="3" style="padding-left:16px"></textarea></div>
+          <button class="btn btn-indigo" onclick="saveLbMessage()"><i class="fas fa-save"></i> Save Message</button>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-list-check"></i> Current Status</div>
+          <div style="display:grid;gap:10px">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.88rem"><span style="color:var(--text2)">Leaderboard Visible</span><span id="lbv-visible" style="font-weight:700">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.88rem"><span style="color:var(--text2)">Custom Message</span><span id="lbv-msg" style="font-weight:700">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:.88rem"><span style="color:var(--text2)">Last Updated</span><span id="lbv-updated" style="font-weight:700">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CLUES ── -->
+      <div id="sec-clues" class="section">
+        <div class="section-head">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+            <div><div class="section-tag">Content</div><div class="section-title">Manage Clues</div></div>
+            <button class="btn btn-green" onclick="openAddClue()"><i class="fas fa-plus"></i> Add Clue</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Title</th><th>Tier</th><th>Points</th><th>Flag</th><th>Rabbit Hole</th><th>Hint</th><th>Actions</th></tr></thead>
+              <tbody id="clues-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── QR GENERATOR ── -->
+      <div id="sec-qr" class="section">
+        <div class="section-head">
+          <div class="section-tag">Tools</div>
+          <div class="section-title">QR Code Generator</div>
+          <div class="section-sub">Generate printable QR codes for physical clue cards</div>
+        </div>
+        <div style="display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start" class="qr-grid">
+          <div class="card">
+            <div class="qr-mode-tabs">
+              <button class="qr-mode-btn active" onclick="setQrMode('single',this)">Single QR</button>
+              <button class="qr-mode-btn" onclick="setQrMode('batch',this)">Batch (All Clues)</button>
+            </div>
+            <div id="qr-single-form">
+              <div class="field"><label>Event Name</label><div class="input-wrap"><i class="fas fa-calendar"></i><input id="qr-event" type="text" value="SECCOM 2025 — Treasure Hunt"></div></div>
+              <div class="field"><label>Powered By</label><div class="input-wrap"><i class="fas fa-star"></i><input id="qr-powered" type="text" value="cludo.tech"></div></div>
+              <div class="field-row">
+                <div class="field"><label>Tier</label><div class="input-wrap"><i class="fas fa-layer-group"></i><input id="qr-tier" type="text" placeholder="e.g. A"></div></div>
+                <div class="field"><label>Location</label><div class="input-wrap"><i class="fas fa-map-pin"></i><input id="qr-loc" type="text" placeholder="LIBRARY"></div></div>
+              </div>
+              <div class="field"><label>Flag (QR content)</label><div class="input-wrap"><i class="fas fa-flag"></i><input id="qr-flag" type="text" placeholder="FLAG{your_flag}" style="font-family:'JetBrains Mono',monospace"></div></div>
+              <div class="field"><label>Date (optional)</label><div class="input-wrap"><i class="fas fa-calendar-days"></i><input id="qr-date" type="text" placeholder="6 September 2025"></div></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-indigo" onclick="generateSingleQR()"><i class="fas fa-qrcode"></i> Generate</button>
+                <button class="btn btn-green" onclick="downloadQR()"><i class="fas fa-download"></i> Download</button>
+              </div>
+            </div>
+            <div id="qr-batch-form" style="display:none">
+              <p style="color:var(--text2);font-size:.85rem;margin-bottom:14px">Generate QR codes for all clues automatically using your clue list.</p>
+              <button class="btn btn-indigo btn-full" onclick="generateBatchQR()"><i class="fas fa-layer-group"></i> Generate All Clue QRs</button>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <button class="btn btn-green btn-sm" onclick="downloadAllQR()"><i class="fas fa-download"></i> Download All</button>
+                <button class="btn btn-ghost btn-sm" onclick="downloadZipQR()"><i class="fas fa-file-zipper"></i> ZIP</button>
+              </div>
+            </div>
+          </div>
+          <div class="qr-preview-area" id="qr-preview-area">
+            <div style="text-align:center;padding:40px;color:var(--text3)"><i class="fas fa-qrcode" style="font-size:2.5rem;margin-bottom:10px;display:block;opacity:.3"></i>QR preview will appear here</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ADD TEAM ── -->
+      <div id="sec-addteam" class="section">
+        <div class="section-head">
+          <div class="section-tag">Teams</div>
+          <div class="section-title">Add New Team</div>
+          <div class="section-sub">Players cannot self-register — admin creates all team accounts</div>
+        </div>
+        <div class="steps">
+          <div class="step-card">
+            <div class="step-badge sb-green">1</div>
+            <div class="step-title">Create Team Profile</div>
+            <div class="field"><label>Team Name</label><div class="input-wrap"><i class="fas fa-users"></i><input id="at-name" type="text" placeholder="Team Alpha"></div></div>
+            <div class="field"><label>Team Password</label><div class="input-wrap"><i class="fas fa-key"></i><input id="at-pass" type="password" placeholder="Min 6 characters"></div></div>
+            <div class="field"><label>Member Names (comma separated)</label><textarea id="at-members" placeholder="Alice, Bob, Charlie" rows="2" style="padding-left:16px"></textarea></div>
+            <button class="btn btn-green btn-full" onclick="createTeamProfile()"><i class="fas fa-user-plus"></i> Create Profile</button>
+          </div>
+          <div class="step-card" id="step2-card">
+            <div class="step-badge sb-amber">2</div>
+            <div class="step-title">Team Created!</div>
+            <div id="step2-info" class="instruction-box">
+              Team profile created. Share the credentials below with the team.
+            </div>
+            <div id="team-creds" style="display:none;background:rgba(34,211,238,0.06);border:1px solid rgba(34,211,238,0.2);border-radius:10px;padding:14px;font-size:.85rem">
+              <div style="margin-bottom:8px"><span style="color:var(--text2)">Team Name:</span> <strong id="cred-name" style="color:var(--accent2)"></strong></div>
+              <div><span style="color:var(--text2)">Password:</span> <strong id="cred-pass" style="color:var(--accent2);font-family:'JetBrains Mono',monospace"></strong></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:20px">
+          <div class="card-title"><i class="fas fa-users-gear"></i> All Registered Teams</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Team Name</th><th>Score</th><th>Solved</th><th>Members</th><th>Actions</th></tr></thead>
+              <tbody id="team-mgmt-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ALL TEAMS ── -->
+      <div id="sec-teams" class="section">
+        <div class="section-head">
+          <div class="section-tag">Management</div>
+          <div class="section-title">All Teams</div>
+        </div>
+        <div class="card">
+          <div class="tbl-toolbar">
+            <div class="search-wrap"><i class="fas fa-search"></i><input class="search-bar" id="teams-search" placeholder="Search team…" oninput="filterTeams()"></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Team Name</th><th>Score</th><th>Solved</th><th>Rabbit Holes</th><th>Last Active</th><th>Actions</th></tr></thead>
+              <tbody id="teams-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SUBMISSIONS ── -->
+      <div id="sec-submissions" class="section">
+        <div class="section-head">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+            <div><div class="section-tag">Audit</div><div class="section-title">Submission Log</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="loadSubmissions()"><i class="fas fa-rotate-right"></i> Refresh</button>
+          </div>
+        </div>
+        <div class="card">
+          <div id="sub-feed" style="display:grid;gap:8px;max-height:600px;overflow-y:auto"></div>
+        </div>
+      </div>
+
+      <!-- ── LIVE MAP ── -->
+      <div id="sec-map" class="section">
+        <div class="section-head">
+          <div class="section-tag">Tracking</div>
+          <div class="section-title">Live Team Locations</div>
+        </div>
+        <div class="card" style="padding:14px;margin-bottom:14px">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <div class="stat-card" style="flex:1;min-width:120px;padding:12px"><div class="stat-icon si-cyan"><i class="fas fa-users"></i></div><div><div class="stat-val" id="map-total">0</div><div class="stat-lbl">Teams</div></div></div>
+            <div class="stat-card" style="flex:1;min-width:120px;padding:12px"><div class="stat-icon si-green"><i class="fas fa-circle-dot"></i></div><div><div class="stat-val" id="map-active">0</div><div class="stat-lbl">Active</div></div></div>
+            <div class="stat-card" style="flex:1;min-width:120px;padding:12px"><div class="stat-icon si-red"><i class="fas fa-circle-xmark"></i></div><div><div class="stat-val" id="map-inactive">0</div><div class="stat-lbl">Inactive</div></div></div>
+            <button class="btn btn-ghost btn-sm" onclick="map&&map.setView(CAMPUS_CENTER,16)"><i class="fas fa-crosshairs"></i> Center</button>
+            <button class="btn btn-ghost btn-sm" id="trails-btn" onclick="toggleTrails()"><i class="fas fa-route"></i> Trails: <span id="trails-status">OFF</span></button>
+            <button class="btn btn-ghost btn-sm" onclick="exportLocationCSV()"><i class="fas fa-download"></i> Export</button>
+          </div>
+        </div>
+        <div class="map-layout">
+          <div class="map-sidebar">
+            <div class="search-wrap" style="width:100%"><i class="fas fa-search"></i><input class="search-bar" id="map-search" placeholder="Search team…" style="width:100%;box-sizing:border-box" oninput="renderTeamList()"></div>
+            <div id="team-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+          <div id="map"></div>
+        </div>
+        <div id="selected-team-info" class="card" style="margin-top:14px;display:none">
+          <div class="card-title"><i class="fas fa-user-location"></i> Selected Team</div>
+          <div id="team-info-content"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<!-- Add/Edit Clue -->
+<div id="clue-modal" class="modal">
+  <div class="modal-card">
+    <button class="close-x" onclick="closeModal('clue-modal')">×</button>
+    <h3><i class="fas fa-map-pin" style="color:var(--accent)"></i><span id="clue-modal-title">Add Clue</span></h3>
+    <input type="hidden" id="cm-id">
+    <div class="field"><label>Title</label><div class="input-wrap"><i class="fas fa-heading"></i><input id="cm-title" placeholder="Clue title"></div></div>
+    <div class="field"><label>Clue Text</label><textarea id="cm-text" placeholder="The clue description shown to players…" style="padding-left:16px" rows="3"></textarea></div>
+    <div class="field"><label>Correct Flag</label><div class="input-wrap"><i class="fas fa-flag"></i><input id="cm-flag" placeholder="FLAG{correct}" style="font-family:'JetBrains Mono',monospace"></div></div>
+    <div class="field"><label>Rabbit Hole Flag (optional)</label><div class="input-wrap"><i class="fas fa-rabbit"></i><input id="cm-rabbit" placeholder="FLAG{wrong_path}" style="font-family:'JetBrains Mono',monospace"></div></div>
+    <div class="field"><label>Hint (optional, costs -30 pts)</label><div class="input-wrap"><i class="fas fa-lightbulb"></i><input id="cm-hint" placeholder="A subtle nudge…"></div></div>
+    <div class="field-row">
+      <div class="field"><label>Unlock Tier</label><div class="input-wrap"><i class="fas fa-layer-group"></i><input id="cm-tier" type="number" min="1" value="1"></div></div>
+      <div class="field"><label>Points</label><div class="input-wrap"><i class="fas fa-star"></i><input id="cm-points" type="number" min="10" value="100"></div></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-ghost" onclick="closeModal('clue-modal')">Cancel</button>
+      <button class="btn btn-green" onclick="saveClue()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Clue Details -->
+<div id="clue-details-modal" class="modal">
+  <div class="modal-card">
+    <button class="close-x" onclick="closeModal('clue-details-modal')">×</button>
+    <h3><i class="fas fa-info-circle" style="color:var(--accent2)"></i>Clue Details</h3>
+    <div id="clue-details-content"></div>
+  </div>
+</div>
+
+<!-- Edit Score -->
+<div id="score-modal" class="modal">
+  <div class="modal-card" style="max-width:360px">
+    <button class="close-x" onclick="closeModal('score-modal')">×</button>
+    <h3><i class="fas fa-star" style="color:var(--accent3)"></i>Edit Score</h3>
+    <input type="hidden" id="sm-id">
+    <div style="font-weight:700;margin-bottom:16px;color:var(--accent2)" id="sm-name"></div>
+    <div class="field"><label>New Score</label><div class="input-wrap"><i class="fas fa-hashtag"></i><input id="sm-score" type="number" min="0"></div></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('score-modal')">Cancel</button>
+      <button class="btn btn-amber" onclick="saveScore()"><i class="fas fa-check"></i> Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIGURATION — Replace with your Firebase config
+// ══════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyBokbGtzP7ZSp1mFS5K8hDUGRUB0E37UPs",
+  authDomain: "treasurehuntcompetition2025.firebaseapp.com",
+  projectId: "treasurehuntcompetition2025",
+  storageBucket: "treasurehuntcompetition2025.firebasestorage.app",
+  messagingSenderId: "983621809061",
+  appId: "1:983621809061:web:ed668aceef58addbb1ee4c"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── CAMPUS CONFIG ─────────────────────────────────
+const CAMPUS_CENTER = [22.6292, 88.3700]; // Brainware University approx coords — update!
+
+// ── STATE ─────────────────────────────────────────
+let allClues = [], allTeams = [], allSubmissions = [];
+let teamData = new Map(), teamMarkers = new Map(), teamTrails = new Map();
+let showTrails = false, selectedTeamId = null, locationListener = null;
+let map = null, scoreChart = null, solveChart = null;
+let currentTier = 1, gameActive = false;
+let unsubscribers = {};
+
+// ══════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  const errEl = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spin-ring"></div> Verifying…';
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    const snap = await db.collection('teams').where('authUid','==',cred.user.uid).get();
+    let isAdmin = false;
+    if (!snap.empty) snap.forEach(d => { if (d.data().isAdmin) isAdmin = true; });
+    if (!isAdmin) { await auth.signOut(); throw new Error('No admin privileges'); }
+  } catch(e) {
+    errEl.textContent = e.message || 'Login failed';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-lock-open"></i> Enter Dashboard';
+  }
+}
+
+function doLogout() { auth.signOut(); }
+
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    const snap = await db.collection('teams').where('authUid','==',user.uid).get();
+    let isAdmin = false;
+    if (!snap.empty) snap.forEach(d => { if (d.data().isAdmin) isAdmin = true; });
+    if (isAdmin) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard-screen').classList.add('visible');
+      initDashboard();
+    } else { auth.signOut(); }
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('dashboard-screen').classList.remove('visible');
+    Object.values(unsubscribers).forEach(u => u && u());
+    if (locationListener) locationListener();
+  }
+});
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+function initDashboard() {
+  listenGameState();
+  listenLeaderboard();
+  listenClues();
+  listenSubmissions();
+  listenLbVisibility();
+  loadActivity();
+  loadBroadcasts();
+  initMap();
+  startLocationTracking();
+  // Mobile menu button
+  if (window.innerWidth <= 768) document.getElementById('menu-btn').style.display='flex';
+}
+
+function loadAll() {
+  loadActivity();
+  loadBroadcasts();
+  toast('Refreshed','success');
+}
+
+// ══════════════════════════════════════════════════
+// FIREBASE LISTENERS
+// ══════════════════════════════════════════════════
+function listenGameState() {
+  unsubscribers.gameState = db.collection('game_state').doc('main').onSnapshot(doc => {
+    if (doc.exists) {
+      const d = doc.data();
+      currentTier = d.currentClueTier || 1;
+      gameActive  = d.gameActive !== false;
+      document.getElementById('tier-big').textContent = currentTier;
+      document.getElementById('tier-inp').value = currentTier;
+      document.getElementById('st-tier').textContent = currentTier;
+      updateGameStatusBadge();
+    }
+  });
+}
+
+function listenLeaderboard() {
+  unsubscribers.lb = db.collection('teams').orderBy('score','desc').onSnapshot(snap => {
+    allTeams = [];
+    snap.forEach(doc => { if (!doc.data().isAdmin) allTeams.push({ id: doc.id, ...doc.data() }); });
+    renderLeaderboard();
+    renderTeamMgmt();
+    renderTeamsList();
+    updateOverviewStats();
+    renderAnalyticsCharts();
+    renderProgress();
+  });
+}
+
+function listenClues() {
+  unsubscribers.clues = db.collection('clues').orderBy('unlockTier').onSnapshot(snap => {
+    allClues = [];
+    snap.forEach(doc => allClues.push({ id: doc.id, ...doc.data() }));
+    renderCluesTable();
+    renderClueAnalytics();
+  });
+}
+
+function listenSubmissions() {
+  unsubscribers.subs = db.collection('event_log').orderBy('timestamp','desc').limit(300).onSnapshot(snap => {
+    allSubmissions = [];
+    snap.forEach(doc => allSubmissions.push({ id: doc.id, ...doc.data() }));
+    renderActivity();
+    if (document.getElementById('sec-submissions').classList.contains('active')) renderSubmissions();
+  });
+}
+
+function listenLbVisibility() {
+  db.collection('leaderboard_config').doc('settings').onSnapshot(doc => {
+    if (doc.exists) {
+      const d = doc.data();
+      document.getElementById('lbv-visible').textContent  = d.isVisible ? 'Yes ✅' : 'No ❌';
+      document.getElementById('lbv-visible').style.color  = d.isVisible ? 'var(--success)' : 'var(--danger)';
+      document.getElementById('lbv-msg').textContent      = d.showMessage ? d.messageTitle || 'Active' : 'None';
+      document.getElementById('lbv-updated').textContent  = d.lastUpdated?.toDate ? d.lastUpdated.toDate().toLocaleString() : '—';
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════
+// OVERVIEW
+// ══════════════════════════════════════════════════
+function updateOverviewStats() {
+  const totalSolves = allTeams.reduce((s,t) => s+(t.solvedClues?.length||0), 0);
+  const totalRabbit = allTeams.reduce((s,t) => s+(t.rabbitHoles||0), 0);
+  document.getElementById('st-teams').textContent  = allTeams.length;
+  document.getElementById('st-online').textContent = document.getElementById('live-count').textContent;
+  document.getElementById('st-solves').textContent = totalSolves;
+  document.getElementById('st-rabbit').textContent = totalRabbit;
+}
+
+function renderProgress() {
+  const maxSolves = allClues.length * allTeams.length || 1;
+  const totalSolves = allTeams.reduce((s,t) => s+(t.solvedClues?.length||0), 0);
+  const pct = ((totalSolves/maxSolves)*100).toFixed(1);
+  const unPct = (100-parseFloat(pct)).toFixed(1);
+  const pb = document.getElementById('prog-bar');
+  pb.innerHTML = `
+    <div class="prog-seg" style="left:0;width:${pct}%;background:linear-gradient(135deg,#10b981,#059669)"><span>${pct}%</span></div>
+    <div class="prog-seg" style="left:${pct}%;width:${unPct}%;background:rgba(255,255,255,0.08)"><span style="color:var(--text2)">${unPct}%</span></div>`;
+  const avg = allTeams.length ? (totalSolves/allTeams.length).toFixed(1) : 0;
+  const ratio = maxSolves ? ((totalSolves/maxSolves)*100).toFixed(1) : 0;
+  document.getElementById('prog-stats').innerHTML = `
+    <div class="prog-stat"><div class="prog-stat-val">${allClues.length}</div><div class="prog-stat-lbl">Clues</div></div>
+    <div class="prog-stat"><div class="prog-stat-val">${totalSolves}</div><div class="prog-stat-lbl">Solves</div></div>
+    <div class="prog-stat"><div class="prog-stat-val">${avg}</div><div class="prog-stat-lbl">Avg/Team</div></div>
+    <div class="prog-stat"><div class="prog-stat-val">${ratio}%</div><div class="prog-stat-lbl">Ratio</div></div>`;
+}
+
+function renderActivity() {
+  const feed = document.getElementById('activity-feed');
+  if (!allSubmissions.length) { feed.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3)">No activity yet</div>'; return; }
+  feed.innerHTML = allSubmissions.slice(0,80).map(s => {
+    const icon  = s.type==='solve'?'fas fa-check':s.type==='rabbit_hole'?'fas fa-rabbit':'fas fa-xmark';
+    const cls   = s.type==='solve'?'fi-green':s.type==='rabbit_hole'?'fi-amber':'fi-blue';
+    const time  = s.timestamp?.toDate ? s.timestamp.toDate().toLocaleTimeString() : '';
+    return `<div class="feed-item">
+      <div class="feed-icon ${cls}"><i class="${icon}"></i></div>
+      <div class="feed-msg">${esc(s.message||'')} <div class="feed-time">${time}</div></div>
+    </div>`;
+  }).join('');
+}
+
+async function loadActivity() { /* Already handled by live listener */ }
+
+// ══════════════════════════════════════════════════
+// LEADERBOARD
+// ══════════════════════════════════════════════════
+function renderLeaderboard() {
+  const search = (document.getElementById('lb-search')?.value||'').toLowerCase();
+  const data   = allTeams.filter(t => t.teamName.toLowerCase().includes(search));
+  const tbody  = document.getElementById('lb-tbody');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--text3)">No teams yet</td></tr>'; return; }
+  tbody.innerHTML = data.map((t,i) => {
+    const r = i===0?'r1':i===1?'r2':i===2?'r3':'rn';
+    const medals = {0:'🥇',1:'🥈',2:'🥉'};
+    return `<tr>
+      <td><span class="rank-badge ${r}">${medals[i]||i+1}</span></td>
+      <td style="font-weight:600">${esc(t.teamName)}</td>
+      <td>${t.solvedClues?.length||0}</td>
+      <td>${t.rabbitHoles||0}</td>
+      <td>${t.hintsUsed||0}</td>
+      <td><span class="score-chip">${t.score||0}</span></td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-amber btn-xs" onclick="openScoreEdit('${t.id}','${esc(t.teamName)}',${t.score||0})"><i class="fas fa-pen"></i></button>
+        <button class="btn btn-red btn-xs" onclick="deleteTeam('${t.id}','${esc(t.teamName)}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function filterLeaderboard() { renderLeaderboard(); }
+
+function exportCSV() {
+  const rows = [['Rank','Team','Score','Solved','Hints','RabbitHoles']];
+  allTeams.forEach((t,i) => rows.push([i+1,t.teamName,t.score||0,t.solvedClues?.length||0,t.hintsUsed||0,t.rabbitHoles||0]));
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='leaderboard.csv'; a.click();
+}
+
+// ══════════════════════════════════════════════════
+// ANALYTICS CHARTS
+// ══════════════════════════════════════════════════
+function renderAnalyticsCharts() {
+  renderScoreChart();
+  renderSolveDistChart();
+}
+
+function renderScoreChart() {
+  const ctx = document.getElementById('score-chart');
+  if (!ctx) return;
+  if (scoreChart) scoreChart.destroy();
+  const colors = ['#6366f1','#22d3ee','#f59e0b','#10b981','#f43f5e','#a855f7','#3b82f6','#ec4899','#14b8a6','#fbbf24'];
+  const top10  = [...allTeams].slice(0,10);
+  const datasets = top10.map((team,i) => ({
+    label: team.teamName,
+    data: [{x: team.lastActive || Date.now(), y: team.score||0}],
+    borderColor: colors[i%colors.length],
+    backgroundColor: colors[i%colors.length]+'30',
+    pointRadius: 6, pointHoverRadius: 8, borderWidth: 2, tension: 0.4,
+  }));
+  scoreChart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } }, tooltip: { backgroundColor: '#0f172a', padding: 10 } },
+      scales: {
+        x: { type: 'linear', ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+      }
+    }
+  });
+}
+
+function renderSolveDistChart() {
+  const ctx = document.getElementById('solve-chart');
+  if (!ctx) return;
+  if (solveChart) solveChart.destroy();
+  const dist = {};
+  allTeams.forEach(t => { const n = t.solvedClues?.length||0; dist[n]=(dist[n]||0)+1; });
+  const maxN = Math.max(...Object.keys(dist).map(Number), 0);
+  const labels = Array.from({length:maxN+1},(_,i)=>i===1?'1 Clue':`${i} Clues`);
+  const data   = labels.map((_,i) => dist[i]||0);
+  solveChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '# Teams', data, backgroundColor: 'rgba(99,102,241,0.7)', borderColor: '#6366f1', borderWidth: 2, borderRadius: 7 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a' } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize:1, color:'#64748b' }, grid: { color:'rgba(255,255,255,0.06)' } }, x: { ticks: { color:'#64748b' }, grid: { display: false } } }
+    }
+  });
+}
+
+function renderClueAnalytics() {
+  const tbody = document.getElementById('clue-analytics-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = allClues.map(c => {
+    const solvers = Object.keys(c.solvers||{}).length;
+    const rabbits = Object.values(c.solvers||{}).filter(v=>v==='rabbit_hole').length;
+    const diff    = solvers===0?'🔴 Unsolved':solvers<=2?'🟡 Hard':solvers<=5?'🟢 Medium':'⚡ Easy';
+    return `<tr>
+      <td style="font-weight:600">${esc(c.clueTitle||c.title||'')}</td>
+      <td><span class="tier-chip">Tier ${c.unlockTier}</span></td>
+      <td>${solvers}</td>
+      <td>${rabbits}</td>
+      <td>${diff}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════
+// GAME CONTROL
+// ══════════════════════════════════════════════════
+async function setTier() {
+  const t = parseInt(document.getElementById('tier-inp').value)||1;
+  try {
+    await db.collection('game_state').doc('main').set({ currentClueTier: t }, { merge: true });
+    toast(`Tier set to ${t}`, 'success');
+  } catch(e) { toast(e.message,'error'); }
+}
+function stepTier(d) { document.getElementById('tier-inp').value = Math.max(1,(currentTier+d)); setTier(); }
+async function toggleGame(active) {
+  try {
+    await db.collection('game_state').doc('main').set({ gameActive: active }, { merge: true });
+    toast(active?'Game started!':'Game paused','success');
+  } catch(e) { toast(e.message,'error'); }
+}
+function updateGameStatusBadge() {
+  const badge = document.getElementById('game-status-badge');
+  badge.textContent = gameActive ? '▶ ACTIVE' : '⏸ PAUSED';
+  badge.className = 'status-badge-lg';
+  badge.style.background = gameActive ? 'rgba(16,185,129,0.15)' : 'rgba(244,63,94,0.12)';
+  badge.style.color       = gameActive ? 'var(--success)' : 'var(--danger)';
+  badge.style.border      = `1px solid ${gameActive?'rgba(16,185,129,0.35)':'rgba(244,63,94,0.3)'}`;
+}
+
+// ══════════════════════════════════════════════════
+// BROADCAST
+// ══════════════════════════════════════════════════
+async function sendBroadcast() {
+  const msg = document.getElementById('bc-msg').value.trim();
+  if (!msg) return toast('Enter a message','error');
+  try {
+    const batch = db.batch();
+    batch.set(db.collection('game_state').doc('main'), { broadcastMessage: msg, broadcastAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    batch.set(db.collection('broadcasts').doc(), { message: msg, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    await batch.commit();
+    document.getElementById('bc-msg').value='';
+    toast('Broadcast sent!','success');
+    loadBroadcasts();
+  } catch(e) { toast(e.message,'error'); }
+}
+async function loadBroadcasts() {
+  const snap = await db.collection('broadcasts').orderBy('createdAt','desc').limit(20).get();
+  const div  = document.getElementById('bc-history');
+  if (snap.empty) { div.innerHTML='<div style="color:var(--text3);font-size:.85rem">No broadcasts</div>'; return; }
+  div.innerHTML = snap.docs.map(d => `
+    <div class="bc-history-item">
+      <div style="font-weight:600;margin-bottom:4px">${esc(d.data().message)}</div>
+      <div style="font-size:.72rem;color:var(--text3)">${d.data().createdAt?.toDate().toLocaleString()||''}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+// LEADERBOARD VISIBILITY
+// ══════════════════════════════════════════════════
+async function setLbVisibility(visible, title, content) {
+  const data = { isVisible: visible, showMessage: !!(title||content), messageTitle: title||'', messageContent: content||'', lastUpdated: firebase.firestore.FieldValue.serverTimestamp() };
+  await db.collection('leaderboard_config').doc('settings').set(data, { merge: true });
+  toast(`Leaderboard ${visible?'visible':'hidden'}`,'success');
+}
+async function saveLbMessage() {
+  const t = document.getElementById('lb-msg-title').value.trim();
+  const c = document.getElementById('lb-msg-content').value.trim();
+  if (!t&&!c) return toast('Enter a title or content','error');
+  await db.collection('leaderboard_config').doc('settings').set({ showMessage:true, messageTitle:t, messageContent:c, lastUpdated:firebase.firestore.FieldValue.serverTimestamp() },{merge:true});
+  toast('Message saved','success');
+}
+
+// ══════════════════════════════════════════════════
+// CLUES
+// ══════════════════════════════════════════════════
+function renderCluesTable() {
+  const tbody = document.getElementById('clues-tbody');
+  if (!tbody) return;
+  if (!allClues.length) { tbody.innerHTML='<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--text3)">No clues yet</td></tr>'; return; }
+  tbody.innerHTML = allClues.map(c => `<tr>
+    <td style="font-weight:600">${esc(c.clueTitle||c.title||'')}</td>
+    <td><span class="tier-chip">Tier ${c.unlockTier}</span></td>
+    <td>${c.points||100}</td>
+    <td><span class="flag-mono">${esc(c.flag||'—')}</span></td>
+    <td><span class="flag-mono" style="color:var(--accent3)">${esc(c.rabbitHoleFlag||'—')}</span></td>
+    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:.8rem">${esc(c.hint||'—')}</td>
+    <td style="display:flex;gap:5px">
+      <button class="btn btn-ghost btn-xs" onclick="openClueDetails('${c.id}')"><i class="fas fa-eye"></i></button>
+      <button class="btn btn-amber btn-xs" onclick="openEditClue('${c.id}')"><i class="fas fa-pen"></i></button>
+      <button class="btn btn-red btn-xs" onclick="deleteClue('${c.id}','${esc(c.clueTitle||'')}')"><i class="fas fa-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function openAddClue() {
+  document.getElementById('clue-modal-title').textContent='Add Clue';
+  document.getElementById('cm-id').value='';
+  ['cm-title','cm-text','cm-flag','cm-rabbit','cm-hint'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cm-tier').value=currentTier;
+  document.getElementById('cm-points').value=100;
+  openModal('clue-modal');
+}
+function openEditClue(id) {
+  const c = allClues.find(x=>x.id===id); if (!c) return;
+  document.getElementById('clue-modal-title').textContent='Edit Clue';
+  document.getElementById('cm-id').value=id;
+  document.getElementById('cm-title').value  = c.clueTitle||c.title||'';
+  document.getElementById('cm-text').value   = c.clueText||'';
+  document.getElementById('cm-flag').value   = c.flag||'';
+  document.getElementById('cm-rabbit').value = c.rabbitHoleFlag||'';
+  document.getElementById('cm-hint').value   = c.hint||'';
+  document.getElementById('cm-tier').value   = c.unlockTier||1;
+  document.getElementById('cm-points').value = c.points||100;
+  openModal('clue-modal');
+}
+function openClueDetails(id) {
+  const c = allClues.find(x=>x.id===id); if (!c) return;
+  document.getElementById('clue-details-content').innerHTML = `
+    <div style="display:grid;gap:10px">
+      ${detailRow('Title', c.clueTitle||c.title||'—')}
+      ${detailRow('Clue Text', c.clueText||'—')}
+      ${detailRow('Correct Flag', c.flag||'—', true)}
+      ${detailRow('Rabbit Hole Flag', c.rabbitHoleFlag||'None', true)}
+      ${detailRow('Hint', c.hint||'None')}
+      ${detailRow('Tier', 'Tier '+c.unlockTier)}
+      ${detailRow('Points', (c.points||100)+' pts')}
+    </div>`;
+  openModal('clue-details-modal');
+}
+function detailRow(label,val,mono=false) {
+  return `<div style="background:var(--surface2);border-radius:9px;padding:11px 14px">
+    <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:4px">${label}</div>
+    <div style="${mono?'font-family:JetBrains Mono,monospace;color:var(--accent2)':'color:var(--text)'};font-size:.88rem">${esc(val)}</div>
+  </div>`;
+}
+async function saveClue() {
+  const id  = document.getElementById('cm-id').value;
+  const obj = {
+    clueTitle: document.getElementById('cm-title').value.trim(),
+    clueText:  document.getElementById('cm-text').value.trim(),
+    flag:      document.getElementById('cm-flag').value.trim(),
+    rabbitHoleFlag: document.getElementById('cm-rabbit').value.trim()||null,
+    hint:      document.getElementById('cm-hint').value.trim()||null,
+    unlockTier: parseInt(document.getElementById('cm-tier').value)||1,
+    points:     parseInt(document.getElementById('cm-points').value)||100,
+  };
+  if (!obj.clueTitle||!obj.clueText||!obj.flag) return toast('Fill required fields','error');
+  try {
+    if (id) await db.collection('clues').doc(id).update({...obj, updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    else    await db.collection('clues').add({...obj, solvers:{}, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    closeModal('clue-modal');
+    toast(id?'Clue updated':'Clue added','success');
+  } catch(e) { toast(e.message,'error'); }
+}
+async function deleteClue(id,name) {
+  if (!confirm(`Delete clue "${name}"?`)) return;
+  await db.collection('clues').doc(id).delete();
+  toast('Clue deleted','success');
+}
+
+// ══════════════════════════════════════════════════
+// QR GENERATOR
+// ══════════════════════════════════════════════════
+let qrMode = 'single', qrPages = [];
+function setQrMode(m,btn) {
+  qrMode = m;
+  document.querySelectorAll('.qr-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('qr-single-form').style.display = m==='single'?'block':'none';
+  document.getElementById('qr-batch-form').style.display  = m==='batch'?'block':'none';
+}
+function generateSingleQR() {
+  const flag    = document.getElementById('qr-flag').value.trim();
+  const event   = document.getElementById('qr-event').value;
+  const powered = document.getElementById('qr-powered').value;
+  const tier    = document.getElementById('qr-tier').value;
+  const loc     = document.getElementById('qr-loc').value;
+  const date    = document.getElementById('qr-date').value;
+  if (!flag) return toast('Enter a flag','error');
+  const preview = document.getElementById('qr-preview-area');
+  preview.innerHTML = `<div class="print-page-preview" id="qr-page-0">
+    <div style="font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">${event}</div>
+    <div id="qr-canvas-0" style="display:flex;justify-content:center;margin:16px 0"></div>
+    <div style="font-family:monospace;font-size:.9rem;color:#333;margin-top:8px">${flag}</div>
+    ${tier||loc?`<div style="font-size:.75rem;color:#888;margin-top:6px">Tier ${tier} · ${loc}</div>`:''}
+    ${date?`<div style="font-size:.7rem;color:#aaa;margin-top:4px">${date}</div>`:''}
+    <div style="font-size:.65rem;color:#bbb;margin-top:12px">Powered by ${powered}</div>
+  </div>`;
+  new QRCode(document.getElementById('qr-canvas-0'), { text:flag, width:240, height:240, colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H });
+  qrPages = [document.getElementById('qr-page-0')];
+}
+async function downloadQR() {
+  if (!qrPages.length) return generateSingleQR();
+  const canvas = await html2canvas(qrPages[0], { scale:3, useCORS:true, backgroundColor:'#fff' });
+  const a = document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download='clue-qr.png'; a.click();
+}
+function generateBatchQR() {
+  if (!allClues.length) return toast('No clues loaded','error');
+  const event   = document.getElementById('qr-event').value;
+  const powered = document.getElementById('qr-powered').value;
+  qrPages = [];
+  const preview = document.getElementById('qr-preview-area');
+  preview.innerHTML = '';
+  allClues.forEach((c,i) => {
+    const div = document.createElement('div'); div.className='print-page-preview'; div.id=`qr-page-${i}`;
+    div.innerHTML=`<div style="font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">${event}</div>
+      <div id="qr-canvas-${i}" style="display:flex;justify-content:center;margin:16px 0"></div>
+      <div style="font-family:monospace;font-size:.85rem;color:#333;margin-top:8px">${c.flag}</div>
+      <div style="font-size:.75rem;color:#888;margin-top:6px">Tier ${c.unlockTier}</div>
+      <div style="font-size:.65rem;color:#bbb;margin-top:12px">Powered by ${powered}</div>`;
+    preview.appendChild(div);
+    setTimeout(()=>{ new QRCode(document.getElementById(`qr-canvas-${i}`),{text:c.flag,width:220,height:220,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H}); },i*50);
+    qrPages.push(div);
+  });
+  toast(`Generated ${allClues.length} QR codes`,'success');
+}
+async function downloadAllQR() {
+  for (let i=0; i<qrPages.length; i++) {
+    const canvas = await html2canvas(qrPages[i],{scale:2,useCORS:true,backgroundColor:'#fff'});
+    const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=`clue-qr-${i+1}.png`; a.click();
+    await new Promise(r=>setTimeout(r,300));
+  }
+}
+async function downloadZipQR() {
+  if (!qrPages.length) return toast('Generate first','error');
+  const zip = new JSZip();
+  for (let i=0; i<qrPages.length; i++) {
+    const canvas = await html2canvas(qrPages[i],{scale:2,useCORS:true,backgroundColor:'#fff'});
+    const blob = await new Promise(r=>canvas.toBlob(r,'image/png'));
+    zip.file(`clue-qr-${i+1}.png`,blob);
+  }
+  const b = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='clue-qrs.zip'; a.click();
+}
+
+// ══════════════════════════════════════════════════
+// ADD TEAM
+// ══════════════════════════════════════════════════
+async function createTeamProfile() {
+  const name    = document.getElementById('at-name').value.trim();
+  const pass    = document.getElementById('at-pass').value;
+  const members = document.getElementById('at-members').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if (!name||!pass) return toast('Fill in name and password','error');
+  if (pass.length<6) return toast('Password must be 6+ characters','error');
+  try {
+    const hashedPass = btoa(pass); // Note: real bcrypt happens on server — for Firebase you'll use Firebase Auth directly
+    await db.collection('teams').add({ teamName:name, score:100, solvedClues:[], hintsUsed:0, rabbitHoles:0, memberNames:members, authUid:null, createdAt:firebase.firestore.FieldValue.serverTimestamp() });
+    document.getElementById('cred-name').textContent = name;
+    document.getElementById('cred-pass').textContent = pass;
+    document.getElementById('team-creds').style.display='block';
+    document.getElementById('step2-info').style.display='block';
+    document.getElementById('step2-info').textContent=`Team "${name}" created! Share these credentials with the team. They use their team name to log in.`;
+    document.getElementById('at-name').value='';
+    document.getElementById('at-pass').value='';
+    document.getElementById('at-members').value='';
+    toast('Team created!','success');
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function renderTeamMgmt() {
+  const tbody = document.getElementById('team-mgmt-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = allTeams.map(t => `<tr>
+    <td style="font-weight:600">${esc(t.teamName)}</td>
+    <td><span class="score-chip">${t.score||0}</span></td>
+    <td>${t.solvedClues?.length||0}</td>
+    <td style="font-size:.8rem;color:var(--text2)">${(t.memberNames||[]).join(', ')||'—'}</td>
+    <td style="display:flex;gap:5px">
+      <button class="btn btn-amber btn-xs" onclick="openScoreEdit('${t.id}','${esc(t.teamName)}',${t.score||0})"><i class="fas fa-pen"></i></button>
+      <button class="btn btn-red btn-xs" onclick="deleteTeam('${t.id}','${esc(t.teamName)}')"><i class="fas fa-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+// ALL TEAMS
+// ══════════════════════════════════════════════════
+function renderTeamsList() {
+  const tbody = document.getElementById('teams-tbody');
+  if (!tbody) return;
+  const search = (document.getElementById('teams-search')?.value||'').toLowerCase();
+  const data   = allTeams.filter(t=>t.teamName.toLowerCase().includes(search));
+  tbody.innerHTML = data.map(t => {
+    const last = t.lastActive ? new Date(t.lastActive).toLocaleTimeString() : '—';
+    return `<tr>
+      <td style="font-weight:600">${esc(t.teamName)}</td>
+      <td><span class="score-chip">${t.score||0}</span></td>
+      <td>${t.solvedClues?.length||0}</td>
+      <td>${t.rabbitHoles||0}</td>
+      <td style="color:var(--text2);font-size:.82rem">${last}</td>
+      <td style="display:flex;gap:5px">
+        <button class="btn btn-amber btn-xs" onclick="openScoreEdit('${t.id}','${esc(t.teamName)}',${t.score||0})"><i class="fas fa-pen"></i></button>
+        <button class="btn btn-red btn-xs" onclick="deleteTeam('${t.id}','${esc(t.teamName)}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function filterTeams() { renderTeamsList(); }
+
+async function deleteTeam(id,name) {
+  if (!confirm(`Delete team "${name}"?`)) return;
+  await db.collection('teams').doc(id).delete();
+  toast('Team deleted','success');
+}
+function openScoreEdit(id,name,score) {
+  document.getElementById('sm-id').value=id; document.getElementById('sm-name').textContent=name; document.getElementById('sm-score').value=score;
+  openModal('score-modal');
+}
+async function saveScore() {
+  const id=document.getElementById('sm-id').value; const s=parseInt(document.getElementById('sm-score').value)||0;
+  await db.collection('teams').doc(id).update({ score:s });
+  closeModal('score-modal'); toast('Score updated','success');
+}
+
+// ══════════════════════════════════════════════════
+// SUBMISSIONS
+// ══════════════════════════════════════════════════
+function loadSubmissions() {
+  db.collection('event_log').orderBy('timestamp','desc').limit(200).get().then(snap => {
+    const feed = document.getElementById('sub-feed');
+    if (snap.empty) { feed.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">No submissions</div>'; return; }
+    feed.innerHTML = snap.docs.map(d => {
+      const s=d.data(); const cls=s.type==='solve'?'rp-correct':s.type==='rabbit_hole'?'rp-rabbit':'rp-wrong';
+      const label=s.type==='solve'?'✅ Correct':s.type==='rabbit_hole'?'🕳 Rabbit':'❌ Wrong';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:.83rem">
+        <span class="result-pill ${cls}">${label}</span>
+        <div style="flex:1"><div style="font-weight:600">${esc(s.teamName||'')}</div><div style="color:var(--text2);font-size:.76rem;margin-top:2px">${esc(s.message||'')}</div></div>
+        <div style="color:var(--text3);font-size:.72rem">${s.timestamp?.toDate().toLocaleTimeString()||''}</div>
+      </div>`;
+    }).join('');
+  });
+}
+function renderSubmissions() { loadSubmissions(); }
+
+// ══════════════════════════════════════════════════
+// LIVE MAP
+// ══════════════════════════════════════════════════
+function initMap() {
+  if (map) return;
+  map = L.map('map').setView(CAMPUS_CENTER, 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:19 }).addTo(map);
+  L.circle(CAMPUS_CENTER, { color:'#6366f1', fillColor:'#6366f1', fillOpacity:0.08, radius:500 }).addTo(map);
+}
+
+function startLocationTracking() {
+  locationListener = db.collection('team_locations').onSnapshot(snap => {
+    const now = Date.now(); let active=0, inactive=0;
+    snap.forEach(doc => {
+      const d = doc.data(); teamData.set(doc.id, d);
+      const last   = d.lastUpdated?.toDate ? d.lastUpdated.toDate().getTime() : 0;
+      const isAct  = (now - last) < 120000;
+      if (isAct) active++; else inactive++;
+      updateMapMarker(doc.id, d, isAct);
+    });
+    document.getElementById('map-total').textContent   = snap.size;
+    document.getElementById('map-active').textContent  = active;
+    document.getElementById('map-inactive').textContent= inactive;
+    renderTeamList();
+  });
+}
+
+function updateMapMarker(teamId, data, isActive) {
+  if (!data.currentLocation) return;
+  const { lat, lng } = data.currentLocation;
+  if (!map) return;
+  if (teamMarkers.has(teamId)) {
+    teamMarkers.get(teamId).setLatLng([lat,lng]);
+    if (showTrails && teamTrails.has(teamId)) {
+      const trail=teamTrails.get(teamId); const lls=trail.getLatLngs(); lls.push([lat,lng]);
+      if (lls.length>50) lls.shift(); trail.setLatLngs(lls);
+    }
+  } else {
+    const icon = L.divIcon({ className:'', html:`<div class="team-marker ${isActive?'team-active':'team-inactive'}">${(data.teamName||'?').substring(0,2).toUpperCase()}</div>`, iconSize:[36,36] });
+    const marker = L.marker([lat,lng],{icon}).addTo(map);
+    marker.bindPopup(`<div style="color:var(--text)"><strong style="font-size:1rem">${data.teamName}</strong><br><small>📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}</small><br><small>Accuracy: ±${data.currentLocation.accuracy?.toFixed(0)||'?'}m</small><br><small style="color:${isActive?'var(--success)':'var(--danger)'}">${isActive?'● Active':'○ Inactive'}</small></div>`);
+    marker.on('click', ()=>selectTeam(teamId));
+    teamMarkers.set(teamId, marker);
+  }
+}
+
+function renderTeamList() {
+  const search = (document.getElementById('map-search')?.value||'').toLowerCase();
+  const list   = document.getElementById('team-list'); if (!list) return;
+  const teams  = Array.from(teamData.entries()).filter(([,d])=>d.teamName.toLowerCase().includes(search));
+  list.innerHTML = teams.map(([id,data]) => {
+    const last = data.lastUpdated?.toDate ? data.lastUpdated.toDate() : null;
+    const isAct= last && (Date.now()-last.getTime())<120000;
+    return `<div class="team-list-item ${selectedTeamId===id?'selected':''}" onclick="selectTeam('${id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center">
+          <span class="status-dot ${isAct?'dot-on':'dot-off'}"></span>
+          <span style="font-weight:600;font-size:.86rem">${esc(data.teamName)}</span>
+        </div>
+        <span style="font-size:.7rem;color:${isAct?'var(--success)':'var(--text3)'};font-weight:600">${isAct?'Active':'Idle'}</span>
+      </div>
+      ${last?`<div style="font-size:.72rem;color:var(--text3);margin-top:4px;margin-left:14px">${last.toLocaleTimeString()}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function selectTeam(teamId) {
+  selectedTeamId=teamId;
+  const data=teamData.get(teamId); if (!data?.currentLocation) return;
+  map.setView([data.currentLocation.lat,data.currentLocation.lng],18);
+  const m=teamMarkers.get(teamId); if (m) m.openPopup();
+  const info=document.getElementById('selected-team-info'); info.style.display='block';
+  document.getElementById('team-info-content').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:.84rem">
+      <div style="background:var(--surface2);border-radius:8px;padding:10px"><div style="color:var(--text3);font-size:.7rem;margin-bottom:3px">Team</div><strong>${esc(data.teamName)}</strong></div>
+      <div style="background:var(--surface2);border-radius:8px;padding:10px"><div style="color:var(--text3);font-size:.7rem;margin-bottom:3px">Latitude</div><span style="font-family:JetBrains Mono,monospace;font-size:.78rem">${data.currentLocation.lat.toFixed(6)}</span></div>
+      <div style="background:var(--surface2);border-radius:8px;padding:10px"><div style="color:var(--text3);font-size:.7rem;margin-bottom:3px">Longitude</div><span style="font-family:JetBrains Mono,monospace;font-size:.78rem">${data.currentLocation.lng.toFixed(6)}</span></div>
+    </div>`;
+  renderTeamList();
+}
+
+function toggleTrails() {
+  showTrails=!showTrails;
+  document.getElementById('trails-status').textContent=showTrails?'ON':'OFF';
+  if (!showTrails) { teamTrails.forEach(t=>map.removeLayer(t)); teamTrails.clear(); }
+}
+
+function exportLocationCSV() {
+  const rows=[['Team','Latitude','Longitude','Accuracy','LastUpdated']];
+  teamData.forEach((d,id)=>{ if(d.currentLocation) rows.push([d.teamName,d.currentLocation.lat,d.currentLocation.lng,d.currentLocation.accuracy||'',d.lastUpdated?.toDate().toISOString()||'']); });
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n')); a.download='locations.csv'; a.click();
+}
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+function nav(name, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name==='submissions') loadSubmissions();
+  if (name==='map') { setTimeout(()=>map&&map.invalidateSize(),200); }
+  if (name==='analytics') renderAnalyticsCharts();
+  if (name==='broadcast') loadBroadcasts();
+  if (window.innerWidth<=768) document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+// ══════════════════════════════════════════════════
+// MODALS & TOAST
+// ══════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
+
+let toastTimer;
+function toast(msg,type='success') {
+  const t=document.getElementById('toast');
+  t.textContent=(type==='success'?'✅ ':'❌ ')+msg;
+  t.className=''; t.classList.add(type==='success'?'t-success':'t-error');
+  t.style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.style.display='none',3500);
+}
+
+// ══════════════════════════════════════════════════
+// UTIL
+// ══════════════════════════════════════════════════
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

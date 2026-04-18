@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SECCOM 2025 | Treasure Hunt</title>
+<link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Brainware_University.svg/250px-Brainware_University.svg.png">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS — Dark + Light theme via toggle
+═══════════════════════════════════════════════ */
+:root {
+  --bg:      #05080f;
+  --bg2:     #080d1a;
+  --surf:    rgba(255,255,255,0.04);
+  --surf2:   rgba(255,255,255,0.08);
+  --surf3:   rgba(255,255,255,0.13);
+  --bdr:     rgba(255,255,255,0.08);
+  --bdr2:    rgba(255,255,255,0.14);
+  --a:       #6366f1;   /* indigo */
+  --b:       #22d3ee;   /* cyan */
+  --c:       #f59e0b;   /* amber */
+  --ok:      #10b981;
+  --bad:     #f43f5e;
+  --warn:    #fb923c;
+  --tx:      #f1f5f9;
+  --tx2:     #94a3b8;
+  --tx3:     #475569;
+  --gold:    #fbbf24;
+  --silver:  #cbd5e1;
+  --bronze:  #b45309;
+}
+[data-theme="light"] {
+  --bg:  #f0f4ff; --bg2: #e8edf8;
+  --surf: rgba(255,255,255,0.8); --surf2: rgba(255,255,255,0.95);
+  --surf3: rgba(255,255,255,1);
+  --bdr: rgba(0,0,0,0.08); --bdr2: rgba(0,0,0,0.14);
+  --tx: #0f172a; --tx2: #475569; --tx3: #94a3b8;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--tx);
+  min-height: 100%;
+  overflow-x: hidden;
+  position: relative;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Ambient orbs */
+.orb {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  filter: blur(80px); animation: orbDrift 14s ease-in-out infinite alternate;
+}
+.orb1 { width:380px;height:380px;background:radial-gradient(circle,rgba(99,102,241,0.14),transparent 70%);top:-80px;left:-80px; }
+.orb2 { width:320px;height:320px;background:radial-gradient(circle,rgba(34,211,238,0.10),transparent 70%);bottom:-60px;right:-60px;animation-delay:5s; }
+.orb3 { width:250px;height:250px;background:radial-gradient(circle,rgba(245,158,11,0.08),transparent 70%);top:50%;left:50%;animation-delay:10s; }
+@keyframes orbDrift { to { transform: translate(30px,20px) scale(1.08); } }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:var(--bdr2); border-radius:4px; }
+
+/* ── Loading Splash ── */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg); display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity .6s ease;
+}
+#splash.out { opacity: 0; pointer-events: none; }
+.splash-logo { width: 76px; height: 76px; border-radius: 22px; border: 2px solid var(--bdr2); margin-bottom: 20px; animation: logoIn 1s ease-out; }
+@keyframes logoIn { from { transform: scale(0) rotate(-90deg); opacity: 0; } to { transform: scale(1) rotate(0deg); opacity: 1; } }
+.splash-name { font-size: 1.3rem; font-weight: 800; letter-spacing: .1em; color: var(--b); margin-bottom: 24px; }
+.splash-bar { width: 180px; height: 3px; background: var(--surf2); border-radius: 3px; overflow: hidden; }
+.splash-fill { height: 100%; background: linear-gradient(90deg,var(--a),var(--b)); border-radius: 3px; animation: fill 1.8s ease-out forwards; }
+@keyframes fill { from { width:0; } to { width:100%; } }
+
+/* ── Location permission modal ── */
+#loc-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,.85); backdrop-filter:blur(10px);
+  display: none; align-items: center; justify-content: center; z-index: 800; padding: 20px;
+}
+#loc-modal.show { display: flex; }
+.loc-card {
+  background: var(--bg2); border: 1px solid var(--bdr2); border-radius: 24px;
+  padding: 36px 28px; max-width: 420px; width: 100%; text-align: center;
+  animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes popIn { from { transform:scale(.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+/* ── Auth ── */
+#auth-screen {
+  min-height: 100vh; display: none; align-items: center; justify-content: center;
+  padding: 20px; position: relative; z-index: 1;
+}
+#auth-screen.show { display: flex; }
+.auth-card {
+  width: 100%; max-width: 420px;
+  background: rgba(8,13,26,.88); backdrop-filter: blur(30px);
+  border: 1px solid var(--bdr2); border-radius: 28px;
+  padding: 44px 36px;
+  box-shadow: 0 0 0 1px rgba(99,102,241,.12), 0 40px 80px rgba(0,0,0,.7);
+}
+.auth-logo { width: 64px; height: 64px; border-radius: 16px; border: 1px solid var(--bdr2); margin-bottom: 20px; }
+.auth-title { font-size: 2rem; font-weight: 900; letter-spacing: -.03em; }
+.auth-title .hi { background: linear-gradient(135deg,var(--a),var(--b)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.auth-sub { color: var(--tx2); font-size: .88rem; margin-bottom: 30px; margin-top: 4px; }
+.field { margin-bottom: 16px; }
+.field label { display:block; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--tx2); margin-bottom:7px; }
+.inp-wrap { position:relative; }
+.inp-wrap i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--tx3); font-size:.82rem; }
+.field input, .field textarea {
+  width:100%; background:rgba(0,0,0,.4); border:1px solid var(--bdr2);
+  border-radius:10px; padding:12px 14px 12px 40px; color:var(--tx);
+  font-size:.9rem; font-family:'Outfit',sans-serif; outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.field textarea { padding-left:14px; min-height:70px; resize:vertical; }
+.field input:focus, .field textarea:focus { border-color:var(--a); box-shadow:0 0 0 3px rgba(99,102,241,.18); }
+
+/* ── Buttons ── */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  padding:11px 20px; border:none; border-radius:10px; font-size:.88rem;
+  font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer;
+  transition:all .2s; white-space:nowrap;
+}
+.btn:disabled { opacity:.45; cursor:not-allowed; transform:none !important; }
+.btn-full { width:100%; }
+.btn-indigo { background:linear-gradient(135deg,var(--a),#4f46e5); color:#fff; box-shadow:0 6px 20px rgba(99,102,241,.35); }
+.btn-indigo:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(99,102,241,.5); }
+.btn-cyan { background:linear-gradient(135deg,var(--b),#0891b2); color:#fff; }
+.btn-cyan:hover:not(:disabled) { transform:translateY(-2px); }
+.btn-green { background:linear-gradient(135deg,var(--ok),#059669); color:#fff; }
+.btn-green:hover:not(:disabled) { transform:translateY(-2px); }
+.btn-amber { background:linear-gradient(135deg,var(--c),#d97706); color:#fff; }
+.btn-amber:hover:not(:disabled) { transform:translateY(-2px); }
+.btn-red { background:linear-gradient(135deg,var(--bad),#dc2626); color:#fff; }
+.btn-red:hover:not(:disabled) { transform:translateY(-2px); }
+.btn-ghost { background:var(--surf2); color:var(--tx); border:1px solid var(--bdr2); }
+.btn-ghost:hover:not(:disabled) { background:var(--surf3); }
+.btn-sm { padding:7px 14px; font-size:.78rem; border-radius:8px; }
+.btn-xs { padding:5px 10px; font-size:.72rem; border-radius:7px; }
+.spin-ring { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.3); border-left-color:#fff; border-radius:50%; animation:_spin .8s linear infinite; }
+@keyframes _spin { to { transform:rotate(360deg); } }
+
+/* ── App Layout ── */
+#app { display:none; flex-direction:column; min-height:100vh; position:relative; z-index:1; }
+#app.show { display:flex; }
+
+/* ── Location banner ── */
+#loc-banner {
+  background: linear-gradient(135deg,var(--ok),#059669);
+  padding: 8px 16px; text-align: center; font-size:.8rem; font-weight:600;
+  display: none; align-items: center; justify-content: center; gap: 8px;
+}
+#loc-banner.show { display: flex; }
+.loc-pulse { width:7px; height:7px; background:#fff; border-radius:50%; animation:locBlink 1.5s infinite; }
+@keyframes locBlink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── Top Header ── */
+.header {
+  background: rgba(5,8,15,.94); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--bdr); padding: 12px 18px;
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-logo { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--bdr); }
+.header-title { font-size: .95rem; font-weight: 800; letter-spacing: -.01em; }
+.header-title span { color: var(--b); }
+.header-team { font-size: .72rem; color: var(--tx2); font-weight: 600; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.score-pill {
+  background: linear-gradient(135deg,var(--a),var(--b));
+  border-radius: 20px; padding: 5px 14px;
+  font-weight: 800; font-size: .9rem; letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums;
+}
+.icon-btn {
+  width: 34px; height: 34px; border: 1px solid var(--bdr2); border-radius: 9px;
+  background: var(--surf); color: var(--tx2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: .82rem;
+  transition: all .2s;
+}
+.icon-btn:hover { background: var(--surf2); color: var(--tx); border-color: var(--a); }
+
+/* ── Main ── */
+.main { flex: 1; overflow-y: auto; padding: 18px 16px 90px; }
+
+/* ── Tier banner in main ── */
+.tier-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg,rgba(245,158,11,.12),rgba(251,146,60,.12));
+  border: 1px solid rgba(245,158,11,.3); border-radius: 12px;
+  padding: 10px 16px; margin-bottom: 18px; font-size: .85rem; font-weight: 700;
+}
+.tier-pill i { color: var(--c); }
+
+/* ── Section label ── */
+.sec-tag { font-size:.67rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em; color:var(--b); margin-bottom:4px; }
+.sec-title { font-size:1.3rem; font-weight:800; letter-spacing:-.02em; margin-bottom:4px; }
+.sec-sub { color:var(--tx2); font-size:.83rem; margin-bottom:18px; }
+
+/* ── Clue Cards ── */
+.clue-card {
+  background: var(--surf); border: 1px solid var(--bdr);
+  border-radius: 18px; padding: 20px; margin-bottom: 14px;
+  transition: all .25s; position: relative; overflow: hidden;
+}
+.clue-card:hover { border-color: var(--bdr2); transform: translateY(-2px); box-shadow: 0 14px 36px rgba(0,0,0,.25); }
+.clue-card.solved {
+  border-color: rgba(16,185,129,.3);
+  background: linear-gradient(135deg,rgba(16,185,129,.05),var(--surf));
+}
+.clue-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg,var(--a),var(--b));
+  opacity: 0; transition: opacity .25s; pointer-events: none; border-radius: inherit;
+}
+.clue-card.solved::before { opacity: 0.04; }
+.solved-badge {
+  position: absolute; top: 14px; right: 14px;
+  background: rgba(16,185,129,.18); border: 1px solid rgba(16,185,129,.35);
+  color: var(--ok); font-size: .67rem; font-weight: 800;
+  padding: 3px 10px; border-radius: 20px; letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.clue-tier-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .68rem; font-weight: 700; color: var(--b);
+  text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px;
+}
+.clue-title { font-size: 1.1rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 8px; line-height: 1.3; }
+.clue-body { color: var(--tx2); font-size: .87rem; line-height: 1.6; margin-bottom: 14px; }
+.clue-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.pts-chip { font-size: .8rem; font-weight: 700; color: var(--c); }
+.hint-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.25);
+  color: var(--c); border-radius: 8px; padding: 5px 12px;
+  font-size: .77rem; font-weight: 700; cursor: pointer; transition: all .2s; font-family:'Outfit',sans-serif;
+}
+.hint-btn:hover { background: rgba(245,158,11,.2); }
+.hint-btn:disabled { opacity: .45; cursor: not-allowed; }
+.hint-reveal {
+  background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+  font-size: .84rem; color: var(--c); display: none;
+  animation: slideIn .3s ease;
+}
+@keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.flag-row { display: flex; gap: 8px; }
+.flag-inp {
+  flex: 1; background: rgba(0,0,0,.35); border: 1px solid var(--bdr2);
+  border-radius: 9px; padding: 10px 13px; color: var(--tx);
+  font-family: 'JetBrains Mono', monospace; font-size: .84rem; outline: none;
+  transition: border-color .2s;
+}
+.flag-inp:focus { border-color: var(--a); box-shadow: 0 0 0 2px rgba(99,102,241,.18); }
+.flag-submit {
+  padding: 10px 18px; border: none; border-radius: 9px;
+  background: linear-gradient(135deg,var(--ok),#059669); color: #fff;
+  font-weight: 800; cursor: pointer; font-size: .84rem; transition: all .2s;
+  white-space: nowrap; font-family:'Outfit',sans-serif;
+}
+.flag-submit:hover:not(:disabled) { transform: translateY(-1px); }
+.flag-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.flag-result { margin-top: 8px; padding: 9px 13px; border-radius: 9px; font-size: .83rem; font-weight: 600; display: none; }
+.fr-ok     { background:rgba(16,185,129,.13); border:1px solid rgba(16,185,129,.28); color:var(--ok); }
+.fr-bad    { background:rgba(244,63,94,.1);   border:1px solid rgba(244,63,94,.22);  color:var(--bad); }
+.fr-rabbit { background:rgba(245,158,11,.1);  border:1px solid rgba(245,158,11,.22); color:var(--c); }
+
+/* ── Leaderboard ── */
+.lb-item {
+  background: var(--surf); border: 1px solid var(--bdr);
+  border-radius: 13px; padding: 13px 16px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 9px; transition: all .2s;
+}
+.lb-item.me { border-color: rgba(99,102,241,.4); background: rgba(99,102,241,.06); }
+.lb-item:hover { transform: translateX(3px); border-color: var(--bdr2); }
+.lb-rank { width: 30px; height: 30px; border-radius: 8px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.85rem; flex-shrink:0; }
+.lb-r1 { background:rgba(251,191,36,.18); color:var(--gold); }
+.lb-r2 { background:rgba(203,213,225,.12); color:var(--silver); }
+.lb-r3 { background:rgba(180,83,9,.18); color:var(--bronze); }
+.lb-rn { background:var(--surf2); color:var(--tx2); }
+.lb-info { flex: 1; min-width: 0; }
+.lb-name { font-weight: 700; font-size: .88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lb-meta { font-size: .72rem; color: var(--tx2); margin-top: 2px; }
+.lb-score { font-size: 1.1rem; font-weight: 900; color: var(--b); letter-spacing: -.02em; }
+
+/* ── Profile page ── */
+.profile-hero {
+  background: linear-gradient(135deg,var(--a),var(--b));
+  border-radius: 20px; padding: 28px; text-align: center; margin-bottom: 18px;
+  position: relative; overflow: hidden;
+}
+.profile-hero::before { content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+.prof-avatar { width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,.2); border:3px solid rgba(255,255,255,.3); margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:900; }
+.prof-name { font-size:1.4rem; font-weight:800; margin-bottom:4px; }
+.prof-score { font-size:2.4rem; font-weight:900; letter-spacing:-.04em; }
+.prof-score small { font-size:.8rem; font-weight:500; opacity:.8; margin-left:4px; }
+.stats-2col { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+.stat-mini { background:var(--surf); border:1px solid var(--bdr); border-radius:13px; padding:16px; text-align:center; }
+.stat-mini .val { font-size:1.7rem; font-weight:900; color:var(--b); }
+.stat-mini .lbl { font-size:.72rem; color:var(--tx2); text-transform:uppercase; letter-spacing:.07em; margin-top:3px; font-weight:600; }
+.event-feed { display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto; }
+.ev-item { display:flex; align-items:flex-start; gap:9px; padding:10px 12px; background:var(--surf); border:1px solid var(--bdr); border-radius:10px; font-size:.82rem; }
+.ev-icon { width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:.72rem; flex-shrink:0; }
+
+/* ── Bottom Nav ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(5,8,15,.97); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--bdr);
+  display: grid; grid-template-columns: repeat(4,1fr);
+  padding: 6px 0 env(safe-area-inset-bottom,6px); z-index: 100;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px; cursor: pointer; color: var(--tx2); border: none; background: transparent;
+  transition: color .2s; font-size: .6rem; font-family:'Outfit',sans-serif;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+}
+.nav-item i { font-size: 1.1rem; transition: all .2s; }
+.nav-item.active { color: var(--b); }
+.nav-item.active i { filter: drop-shadow(0 0 7px var(--b)); }
+.nav-badge {
+  position: absolute; top: -4px; right: -4px; width: 16px; height: 16px;
+  background: var(--bad); border-radius: 50%; font-size: .62rem;
+  display: flex; align-items: center; justify-content: center; font-weight: 800;
+}
+
+/* ── Pages ── */
+.page { display: none; animation: pageIn .3s ease; }
+.page.active { display: block; }
+@keyframes pageIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── Broadcast Toast ── */
+#bc-toast {
+  position: fixed; top: 68px; left: 50%; transform: translateX(-50%);
+  z-index: 300; width: min(480px,92vw);
+  background: linear-gradient(135deg,rgba(99,102,241,.96),rgba(34,211,238,.92));
+  backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 16px; padding: 14px 18px; box-shadow: 0 20px 50px rgba(0,0,0,.4);
+  display: none; animation: bcDown .4s ease-out;
+}
+@keyframes bcDown { from { transform:translateX(-50%) translateY(-16px); opacity:0; } to { transform:translateX(-50%) translateY(0); opacity:1; } }
+#bc-toast .bc-label { font-size:.73rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; opacity:.8; margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+#bc-toast .bc-msg { font-size:.9rem; font-weight:600; }
+.bc-close { position:absolute; top:10px; right:12px; background:rgba(255,255,255,.2); border:none; color:#fff; width:24px; height:24px; border-radius:6px; cursor:pointer; font-size:.9rem; display:flex; align-items:center; justify-content:center; }
+
+/* ── QR Scanner ── */
+.qr-wrap { position:relative; width:100%; max-height:340px; background:#000; border-radius:14px; overflow:hidden; }
+#qr-video { width:100%; height:100%; object-fit:cover; display:block; }
+.qr-frame-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.qr-frame { width:220px; height:220px; border:3px solid var(--b); border-radius:14px; position:relative; box-shadow:0 0 0 9999px rgba(0,0,0,.45); }
+.qr-scan-line { position:absolute; width:100%; height:2px; background:linear-gradient(90deg,transparent,var(--b),transparent); animation:scanLine 2s linear infinite; }
+@keyframes scanLine { 0%{top:0} 100%{top:100%} }
+.qr-result-box { background:rgba(34,211,238,.08); border:1px solid rgba(34,211,238,.25); border-radius:11px; padding:12px 14px; margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:.82rem; word-break:break-all; color:var(--b); display:none; }
+
+/* ── No clues state ── */
+.empty-state { text-align:center; padding:48px 20px; color:var(--tx3); }
+.empty-state i { font-size:2.2rem; margin-bottom:12px; display:block; opacity:.35; }
+
+/* ── Modal ── */
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.82); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; z-index:400; padding:16px; }
+.modal.open { display:flex; }
+.modal-card { background:var(--bg2); border:1px solid var(--bdr2); border-radius:22px; padding:26px; width:100%; max-width:460px; max-height:90vh; overflow-y:auto; position:relative; box-shadow:0 40px 80px rgba(0,0,0,.6); animation:popIn .35s cubic-bezier(.175,.885,.32,1.275); }
+.modal-card h3 { font-size:1.1rem; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:9px; }
+.close-x { position:absolute; top:14px; right:14px; width:28px; height:28px; background:var(--surf2); border:none; border-radius:7px; color:var(--tx2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.95rem; transition:all .2s; }
+.close-x:hover { background:var(--surf3); color:var(--tx); }
+
+/* ── Theme toggle ── */
+.theme-icon { font-size: .85rem; }
+</style>
+</head>
+<body>
+<!-- Ambient orbs -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- Splash -->
+<div id="splash">
+  <img src="https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Brainware_University.svg/250px-Brainware_University.svg.png" class="splash-logo">
+  <div class="splash-name">SECCOM 2025</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- Location Permission Modal -->
+<div id="loc-modal">
+  <div class="loc-card">
+    <div style="width:64px;height:64px;background:rgba(16,185,129,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><i class="fas fa-map-marker-alt" style="font-size:1.8rem;color:var(--ok)"></i></div>
+    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:8px">Location Access Required</h2>
+    <p style="color:var(--tx2);font-size:.86rem;line-height:1.6;margin-bottom:20px">We track your location during the game for safety and event coordination. Only coordinators can see your location.</p>
+    <div style="background:var(--surf2);border-radius:10px;padding:14px;margin-bottom:20px;font-size:.82rem;color:var(--tx2);text-align:left">
+      <p style="margin-bottom:6px"><i class="fas fa-check" style="color:var(--ok);margin-right:7px"></i>Updated every 20 seconds</p>
+      <p style="margin-bottom:6px"><i class="fas fa-check" style="color:var(--ok);margin-right:7px"></i>Only during active game session</p>
+      <p><i class="fas fa-check" style="color:var(--ok);margin-right:7px"></i>Used for safety & coordination</p>
+    </div>
+    <div id="loc-instructions" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:12px;margin-bottom:16px;font-size:.8rem;color:var(--tx2);text-align:left">
+      <p style="color:var(--c);font-weight:700;margin-bottom:6px"><i class="fas fa-info-circle" style="margin-right:5px"></i>Location blocked</p>
+      <p>Chrome: Lock icon → Site settings → Location → Allow</p>
+      <p style="margin-top:4px">Safari: Settings → Safari → Location → Allow</p>
+    </div>
+    <button class="btn btn-green btn-full" id="grant-loc-btn" onclick="requestLocation()"><i class="fas fa-check-circle"></i> Grant Location Access</button>
+    <button class="btn btn-ghost btn-full" id="retry-loc-btn" style="margin-top:8px;display:none" onclick="requestLocation()"><i class="fas fa-redo"></i> Try Again</button>
+    <p style="font-size:.72rem;color:var(--tx3);margin-top:12px">Location access is required to participate</p>
+  </div>
+</div>
+
+<!-- Broadcast Toast -->
+<div id="bc-toast">
+  <button class="bc-close" onclick="document.getElementById('bc-toast').style.display='none'">×</button>
+  <div class="bc-label"><i class="fas fa-bullhorn"></i> Admin Broadcast</div>
+  <div class="bc-msg" id="bc-msg-text"></div>
+</div>
+
+<!-- Auth Screen -->
+<div id="auth-screen" class="show">
+  <div class="auth-card">
+    <img src="https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Brainware_University.svg/250px-Brainware_University.svg.png" class="auth-logo">
+    <h1 class="auth-title"><span class="hi">Treasure</span> Hunt</h1>
+    <p class="auth-sub">SECCOM 2025 — Login with credentials from your coordinator</p>
+    <div class="field"><label>Team Name</label><div class="inp-wrap"><i class="fas fa-users"></i><input id="l-team" type="text" placeholder="Your team name" autocomplete="username"></div></div>
+    <div class="field"><label>Password</label><div class="inp-wrap"><i class="fas fa-lock"></i><input id="l-pass" type="password" placeholder="Team password" autocomplete="current-password"></div></div>
+    <button class="btn btn-indigo btn-full" id="login-btn" onclick="doLogin()"><i class="fas fa-arrow-right-to-bracket"></i> Enter Hunt</button>
+    <div style="color:var(--bad);font-size:.82rem;text-align:center;margin-top:12px;min-height:18px" id="auth-err"></div>
+    <div style="text-align:center;margin-top:20px;font-size:.75rem;color:var(--tx3)">
+      <i class="fas fa-info-circle" style="margin-right:4px"></i>
+      Teams are created by coordinators. Contact your event admin if you don't have login details.
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <!-- Location banner -->
+  <div id="loc-banner"><div class="loc-pulse"></div><span id="loc-banner-text">Location tracking active</span></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <img src="https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Brainware_University.svg/250px-Brainware_University.svg.png" class="header-logo">
+      <div>
+        <div class="header-title">SECCOM <span>2025</span></div>
+        <div class="header-team">Team: <span id="h-team" style="color:var(--b);font-weight:700"></span></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="score-pill" id="h-score">0 pts</div>
+      <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle theme"><i class="fas fa-sun theme-icon"></i></button>
+      <button class="icon-btn" onclick="openQR()" title="QR Scanner"><i class="fas fa-qrcode"></i></button>
+      <button class="icon-btn" onclick="doLogout()" title="Logout"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- CLUES PAGE -->
+    <div id="page-clues" class="page active">
+      <div id="tier-pill" class="tier-pill" style="display:none"><i class="fas fa-unlock-alt"></i> Current Tier: <strong id="tier-num">1</strong></div>
+      <div class="sec-tag">Active Challenge</div>
+      <div class="sec-title">Clues</div>
+      <div class="sec-sub">Solve each clue by submitting the correct flag</div>
+      <div id="clues-list"><div class="empty-state"><i class="fas fa-compass"></i><p>Loading clues…</p></div></div>
+    </div>
+
+    <!-- LEADERBOARD PAGE -->
+    <div id="page-lb" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+        <div><div class="sec-tag">Rankings</div><div class="sec-title">Leaderboard</div></div>
+        <button class="icon-btn" onclick="loadLeaderboard()" title="Refresh"><i class="fas fa-rotate-right"></i></button>
+      </div>
+      <div id="lb-waiting" style="display:none;text-align:center;padding:40px 20px">
+        <i class="fas fa-eye-slash" style="font-size:2rem;opacity:.3;margin-bottom:12px;display:block"></i>
+        <h3 id="lb-wait-title" style="font-weight:700;margin-bottom:8px">Leaderboard Hidden</h3>
+        <p id="lb-wait-msg" style="color:var(--tx2);font-size:.85rem">Results will be revealed by the coordinator</p>
+      </div>
+      <div id="lb-list"></div>
+    </div>
+
+    <!-- FEED PAGE -->
+    <div id="page-feed" class="page">
+      <div class="sec-tag">Live</div>
+      <div class="sec-title">Event Feed</div>
+      <div class="sec-sub">Real-time activity from the hunt</div>
+      <div id="event-feed" class="event-feed"><div class="empty-state"><i class="fas fa-bolt"></i><p>No events yet</p></div></div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div id="page-profile" class="page">
+      <div id="profile-content"><div class="empty-state"><i class="fas fa-user"></i><p>Loading…</p></div></div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-clues" onclick="showPage('clues',this)"><i class="fas fa-map-marked-alt"></i>Clues</button>
+    <button class="nav-item" id="nav-lb" onclick="showPage('lb',this)"><i class="fas fa-trophy"></i>Rankings</button>
+    <button class="nav-item" id="nav-feed" onclick="showPage('feed',this)"><i class="fas fa-bolt"></i>Feed</button>
+    <button class="nav-item" id="nav-profile" onclick="showPage('profile',this)"><i class="fas fa-user-circle"></i>Profile</button>
+  </nav>
+</div>
+
+<!-- QR Scanner Modal -->
+<div id="qr-modal" class="modal">
+  <div class="modal-card">
+    <button class="close-x" onclick="closeQR()">×</button>
+    <h3><i class="fas fa-qrcode" style="color:var(--warn)"></i>QR Scanner</h3>
+    <div class="qr-wrap" id="qr-wrap"><video id="qr-video" playsinline muted></video>
+      <div class="qr-frame-overlay"><div class="qr-frame"><div class="qr-scan-line"></div></div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-green btn-sm" id="qr-start-btn" onclick="startQR()"><i class="fas fa-play"></i> Start</button>
+      <button class="btn btn-red btn-sm" id="qr-stop-btn" onclick="stopQR()" style="display:none"><i class="fas fa-stop"></i> Stop</button>
+    </div>
+    <div id="qr-result-box" class="qr-result-box"></div>
+    <div id="qr-status" style="text-align:center;padding:14px;color:var(--tx2);font-size:.84rem"><i class="fas fa-camera" style="margin-right:5px"></i>Start scanner and point at QR code</div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+// ══════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyBokbGtzP7ZSp1mFS5K8hDUGRUB0E37UPs",
+  authDomain: "treasurehuntcompetition2025.firebaseapp.com",
+  projectId: "treasurehuntcompetition2025",
+  storageBucket: "treasurehuntcompetition2025.firebasestorage.app",
+  messagingSenderId: "983621809061",
+  appId: "1:983621809061:web:ed668aceef58addbb1ee4c"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let currentTeam = null, currentTier = 1;
+let solvedClues = new Set(), hintsRevealed = new Set();
+let locationWatchId = null, locationInterval = null;
+let lastBroadcast = null, qrScanner = null;
+let unsubs = {};
+
+// ══════════════════════════════════════════
+// SPLASH
+// ══════════════════════════════════════════
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('out');
+    setTimeout(() => document.getElementById('splash').remove(), 700);
+  }, 1900);
+});
+
+// ══════════════════════════════════════════
+// AUTH — Firebase email/password (coordinated by admin)
+// ══════════════════════════════════════════
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogin() {
+  const teamNameRaw = document.getElementById('l-team').value.trim();
+  const pass        = document.getElementById('l-pass').value;
+  const errEl = document.getElementById('auth-err');
+  const btn   = document.getElementById('login-btn');
+  errEl.textContent=''; btn.disabled=true;
+  btn.innerHTML='<div class="spin-ring"></div> Logging in…';
+  try {
+    // Find team in Firestore by name (admin creates these)
+    const snap = await db.collection('teams').where('teamName','==',teamNameRaw).get();
+    if (snap.empty) throw new Error('Team not found. Check your team name.');
+    const teamDoc = snap.docs[0]; const teamData = teamDoc.data();
+    if (teamData.isAdmin) throw new Error('This is an admin account.');
+    // Authenticate with Firebase Auth using the linked email
+    if (!teamData.authUid) {
+      // Fallback: use team name as email slug
+      throw new Error('Account not fully configured. Contact your coordinator.');
+    }
+    // Try login via email derived from teamName
+    const email = teamNameRaw.toLowerCase().replace(/\s+/g,'.') + '@seccom2025.game';
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    errEl.textContent = e.message || 'Login failed';
+    btn.disabled=false;
+    btn.innerHTML='<i class="fas fa-arrow-right-to-bracket"></i> Enter Hunt';
+  }
+}
+
+function doLogout() {
+  stopLocationTracking();
+  if (qrScanner) { qrScanner.stop(); qrScanner.destroy(); qrScanner=null; }
+  Object.values(unsubs).forEach(u=>u&&u());
+  auth.signOut();
+}
+
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    // Load team data
+    const snap = await db.collection('teams').where('authUid','==',user.uid).get();
+    if (snap.empty) { auth.signOut(); return; }
+    const d = snap.docs[0];
+    if (d.data().isAdmin) { auth.signOut(); return; }
+    currentTeam = { id: d.id, ...d.data() };
+    solvedClues = new Set(currentTeam.solvedClues||[]);
+    document.getElementById('auth-screen').classList.remove('show');
+    document.getElementById('app').classList.add('show');
+    document.getElementById('h-team').textContent = currentTeam.teamName;
+    document.getElementById('h-score').textContent = (currentTeam.score||0)+' pts';
+    initApp();
+  } else {
+    document.getElementById('auth-screen').classList.add('show');
+    document.getElementById('app').classList.remove('show');
+  }
+});
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+function initApp() {
+  listenGameState();
+  listenTeam();
+  loadClues();
+  loadLeaderboard();
+  loadEventFeed();
+  listenBroadcast();
+  listenLbVisibility();
+  document.getElementById('loc-modal').classList.add('show');
+}
+
+// ══════════════════════════════════════════
+// LISTENERS
+// ══════════════════════════════════════════
+function listenGameState() {
+  unsubs.gs = db.collection('game_state').doc('main').onSnapshot(doc => {
+    if (!doc.exists) return;
+    const d = doc.data();
+    currentTier = d.currentClueTier||1;
+    document.getElementById('tier-num').textContent = currentTier;
+    document.getElementById('tier-pill').style.display = 'inline-flex';
+    loadClues();
+  });
+}
+
+function listenTeam() {
+  unsubs.team = db.collection('teams').doc(currentTeam.id).onSnapshot(doc => {
+    if (!doc.exists) return;
+    const d = doc.data(); currentTeam = { id:doc.id,...d };
+    solvedClues = new Set(d.solvedClues||[]);
+    document.getElementById('h-score').textContent = (d.score||0)+' pts';
+    renderProfile();
+  });
+}
+
+function listenBroadcast() {
+  unsubs.bc = db.collection('game_state').doc('main').onSnapshot(doc => {
+    if (!doc.exists) return;
+    const d = doc.data();
+    if (d.broadcastMessage && d.broadcastMessage !== lastBroadcast) {
+      lastBroadcast = d.broadcastMessage;
+      showBroadcast(d.broadcastMessage);
+    }
+  });
+}
+
+function listenLbVisibility() {
+  unsubs.lbv = db.collection('leaderboard_config').doc('settings').onSnapshot(doc => {
+    if (!doc.exists) return;
+    const d = doc.data();
+    const waiting = document.getElementById('lb-waiting');
+    const list    = document.getElementById('lb-list');
+    if (d.isVisible) { waiting.style.display='none'; list.style.display=''; }
+    else {
+      waiting.style.display='block'; list.style.display='none';
+      if (d.showMessage && d.messageTitle) {
+        document.getElementById('lb-wait-title').textContent = d.messageTitle;
+        document.getElementById('lb-wait-msg').textContent   = d.messageContent||'';
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// CLUES
+// ══════════════════════════════════════════
+async function loadClues() {
+  const list = document.getElementById('clues-list');
+  try {
+    const snap = await db.collection('clues').where('unlockTier','<=',currentTier).orderBy('unlockTier').get();
+    if (snap.empty) { list.innerHTML='<div class="empty-state"><i class="fas fa-hourglass-start"></i><p>No clues unlocked yet. Stay tuned!</p></div>'; return; }
+    const clues = snap.docs.map(d=>({id:d.id,...d.data()}));
+    list.innerHTML = clues.map(c => renderClueCard(c)).join('');
+    // Attach enter key
+    clues.forEach(c => {
+      const inp = document.getElementById('fi-'+c.id);
+      if (inp) inp.addEventListener('keydown', e => { if(e.key==='Enter') submitFlag(c.id); });
+    });
+  } catch(e) { list.innerHTML=`<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>${esc(e.message)}</p></div>`; }
+}
+
+function renderClueCard(c) {
+  const solved = solvedClues.has(c.id);
+  const hasHint = !!(c.hint);
+  return `
+  <div class="clue-card ${solved?'solved':''}" id="card-${c.id}">
+    ${solved?'<div class="solved-badge">✓ Solved</div>':''}
+    <div class="clue-tier-tag"><i class="fas fa-layer-group"></i> Tier ${c.unlockTier}</div>
+    <div class="clue-title">${esc(c.clueTitle||c.title||'')}</div>
+    <div class="clue-body">${esc(c.clueText||'')}</div>
+    ${!solved?`
+      <div class="clue-meta">
+        <div class="pts-chip"><i class="fas fa-star"></i> ${c.points||100} pts</div>
+        ${hasHint?`<button class="hint-btn" id="hbtn-${c.id}" onclick="revealHint('${c.id}')"><i class="fas fa-lightbulb"></i> Hint (-30 pts)</button>`:''}
+      </div>
+      ${hasHint?`<div class="hint-reveal" id="hint-${c.id}">${esc(c.hint)}</div>`:''}
+      <div class="flag-row">
+        <input class="flag-inp" id="fi-${c.id}" type="text" placeholder="FLAG{...}" spellcheck="false" autocomplete="off" autocapitalize="none">
+        <button class="flag-submit" id="fsub-${c.id}" onclick="submitFlag('${c.id}')">Submit</button>
+      </div>
+      <div class="flag-result" id="fres-${c.id}"></div>
+    `:`
+      <div class="clue-meta" style="margin-bottom:0">
+        <div class="pts-chip"><i class="fas fa-check-circle" style="color:var(--ok)"></i> ${c.points||100} pts earned</div>
+      </div>
+    `}
+  </div>`;
+}
+
+async function revealHint(clueId) {
+  if (hintsRevealed.has(clueId)) return;
+  const btn = document.getElementById('hbtn-'+clueId);
+  const box = document.getElementById('hint-'+clueId);
+  btn.disabled=true; btn.textContent='Revealing…';
+  try {
+    await db.collection('teams').doc(currentTeam.id).update({ hintsUsed: firebase.firestore.FieldValue.increment(1), score: firebase.firestore.FieldValue.increment(-30) });
+    await db.collection('event_log').add({ teamId:currentTeam.id, teamName:currentTeam.teamName, type:'hint', message:`${currentTeam.teamName} used a hint for clue ${clueId}`, timestamp:firebase.firestore.FieldValue.serverTimestamp() });
+    hintsRevealed.add(clueId);
+    box.style.display='block'; btn.style.display='none';
+  } catch(e) { btn.disabled=false; btn.innerHTML='<i class="fas fa-lightbulb"></i> Hint (-30 pts)'; }
+}
+
+async function submitFlag(clueId) {
+  const inp   = document.getElementById('fi-'+clueId);
+  const btn   = document.getElementById('fsub-'+clueId);
+  const resEl = document.getElementById('fres-'+clueId);
+  const flag  = inp.value.trim();
+  if (!flag) return;
+  btn.disabled=true; btn.innerHTML='<div class="spin-ring"></div>';
+  resEl.style.display='none';
+
+  try {
+    const clueSnap = await db.collection('clues').doc(clueId).get();
+    if (!clueSnap.exists) throw new Error('Clue not found');
+    const c = clueSnap.data();
+
+    if (solvedClues.has(clueId)) {
+      showResult(resEl,'✅ Already solved!','fr-ok');
+      btn.disabled=false; btn.textContent='Submit'; return;
+    }
+
+    const submitted = flag.trim().toUpperCase();
+    const correct   = (c.flag||'').trim().toUpperCase();
+    const rabbit    = (c.rabbitHoleFlag||'').trim().toUpperCase();
+
+    if (submitted===correct) {
+      // Correct!
+      const points = c.points||100;
+      const newSolved = [...(currentTeam.solvedClues||[]), clueId];
+      await db.collection('teams').doc(currentTeam.id).update({ score:firebase.firestore.FieldValue.increment(points), solvedClues:newSolved });
+      await db.collection('event_log').add({ teamId:currentTeam.id, teamName:currentTeam.teamName, type:'solve', message:`🎉 ${currentTeam.teamName} solved "${c.clueTitle||c.title}" (+${points} pts)`, timestamp:firebase.firestore.FieldValue.serverTimestamp() });
+      showResult(resEl,`🎉 Correct! +${points} points`,'fr-ok');
+      solvedClues.add(clueId);
+      setTimeout(loadClues, 1400);
+    } else if (rabbit && submitted===rabbit) {
+      await db.collection('teams').doc(currentTeam.id).update({ score:firebase.firestore.FieldValue.increment(-20), rabbitHoles:firebase.firestore.FieldValue.increment(1) });
+      await db.collection('event_log').add({ teamId:currentTeam.id, teamName:currentTeam.teamName, type:'rabbit_hole', message:`🕳️ ${currentTeam.teamName} fell into a rabbit hole! (-20 pts)`, timestamp:firebase.firestore.FieldValue.serverTimestamp() });
+      showResult(resEl,'🕳️ Rabbit hole! -20 points','fr-rabbit');
+      btn.disabled=false; btn.textContent='Submit'; inp.value=''; inp.focus();
+    } else {
+      showResult(resEl,'❌ Wrong flag. Keep trying!','fr-bad');
+      btn.disabled=false; btn.textContent='Submit'; inp.focus();
+    }
+  } catch(e) {
+    showResult(resEl,'Error: '+e.message,'fr-bad');
+    btn.disabled=false; btn.textContent='Submit';
+  }
+}
+
+function showResult(el,msg,cls) {
+  el.textContent=msg; el.className='flag-result '+cls; el.style.display='block';
+}
+
+// ══════════════════════════════════════════
+// LEADERBOARD
+// ══════════════════════════════════════════
+async function loadLeaderboard() {
+  try {
+    const snap = await db.collection('teams').orderBy('score','desc').get();
+    const list = document.getElementById('lb-list');
+    const teams = snap.docs.map(d=>({id:d.id,...d.data()})).filter(t=>!t.isAdmin);
+    if (!teams.length) { list.innerHTML='<div class="empty-state"><i class="fas fa-trophy"></i><p>No teams yet</p></div>'; return; }
+    list.innerHTML = teams.map((t,i) => {
+      const isMe = t.id===currentTeam.id;
+      const rcls  = i===0?'lb-r1':i===1?'lb-r2':i===2?'lb-r3':'lb-rn';
+      const medals= {0:'🥇',1:'🥈',2:'🥉'};
+      return `<div class="lb-item ${isMe?'me':''}">
+        <div class="lb-rank ${rcls}">${medals[i]||i+1}</div>
+        <div class="lb-info">
+          <div class="lb-name">${esc(t.teamName)} ${isMe?'<span style="font-size:.65rem;color:var(--b)">(you)</span>':''}</div>
+          <div class="lb-meta">${t.solvedClues?.length||0} solved · ${t.rabbitHoles||0} rabbit holes</div>
+        </div>
+        <div class="lb-score">${t.score||0}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { document.getElementById('lb-list').innerHTML=`<div class="empty-state"><i class="fas fa-exclamation"></i><p>${esc(e.message)}</p></div>`; }
+}
+
+// ══════════════════════════════════════════
+// EVENT FEED
+// ══════════════════════════════════════════
+function loadEventFeed() {
+  unsubs.feed = db.collection('event_log').orderBy('timestamp','desc').limit(60).onSnapshot(snap => {
+    const feed = document.getElementById('event-feed');
+    if (snap.empty) { feed.innerHTML='<div class="empty-state"><i class="fas fa-bolt"></i><p>No events yet</p></div>'; return; }
+    feed.innerHTML = snap.docs.map(d => {
+      const s   = d.data();
+      const ico = s.type==='solve'?'fas fa-check':s.type==='rabbit_hole'?'fas fa-rabbit':'fas fa-info';
+      const bcl = s.type==='solve'?'rgba(16,185,129,0.15)':s.type==='rabbit_hole'?'rgba(245,158,11,0.12)':'rgba(99,102,241,0.12)';
+      const clr = s.type==='solve'?'var(--ok)':s.type==='rabbit_hole'?'var(--c)':'var(--a)';
+      const tm  = s.timestamp?.toDate?s.timestamp.toDate().toLocaleTimeString():'';
+      return `<div class="ev-item">
+        <div class="ev-icon" style="background:${bcl}"><i class="${ico}" style="color:${clr}"></i></div>
+        <div style="flex:1"><div style="font-size:.83rem;line-height:1.4">${esc(s.message||'')}</div><div style="font-size:.7rem;color:var(--tx3);margin-top:2px">${tm}</div></div>
+      </div>`;
+    }).join('');
+  });
+}
+
+// ══════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════
+function renderProfile() {
+  const t = currentTeam;
+  const initials = (t.teamName||'T').slice(0,2).toUpperCase();
+  document.getElementById('profile-content').innerHTML = `
+    <div class="profile-hero">
+      <div class="prof-avatar">${initials}</div>
+      <div class="prof-name">${esc(t.teamName)}</div>
+      <div class="prof-score">${t.score||0}<small>pts</small></div>
+    </div>
+    <div class="stats-2col">
+      <div class="stat-mini"><div class="val">${(t.solvedClues||[]).length}</div><div class="lbl">Solved</div></div>
+      <div class="stat-mini"><div class="val">${t.rabbitHoles||0}</div><div class="lbl">Rabbit Holes</div></div>
+      <div class="stat-mini"><div class="val">${t.hintsUsed||0}</div><div class="lbl">Hints Used</div></div>
+      <div class="stat-mini"><div class="val" style="font-size:1.1rem">${t.memberNames?.length||'—'}</div><div class="lbl">Members</div></div>
+    </div>
+    ${t.memberNames?.length?`
+    <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:16px;margin-bottom:16px">
+      <div class="sec-tag" style="margin-bottom:10px">Team Members</div>
+      ${t.memberNames.map(m=>`<div style="padding:8px 0;border-bottom:1px solid var(--bdr);font-size:.88rem">${esc(m)}</div>`).join('')}
+    </div>`:''}
+    <div id="loc-status-card" style="background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:14px;margin-bottom:16px">
+      <div class="sec-tag" style="margin-bottom:6px">Location</div>
+      <div id="loc-status-text" style="font-size:.85rem;color:var(--tx2)">Not tracking</div>
+    </div>
+    <button class="btn btn-red btn-full" onclick="doLogout()"><i class="fas fa-right-from-bracket"></i> Logout</button>`;
+}
+
+// ══════════════════════════════════════════
+// BROADCAST
+// ══════════════════════════════════════════
+let bcTimer;
+function showBroadcast(msg) {
+  document.getElementById('bc-msg-text').textContent = msg;
+  const t = document.getElementById('bc-toast');
+  t.style.display='block';
+  clearTimeout(bcTimer); bcTimer=setTimeout(()=>t.style.display='none', 7000);
+}
+
+// ══════════════════════════════════════════
+// LOCATION TRACKING
+// ══════════════════════════════════════════
+function requestLocation() {
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+  const grntBtn  = document.getElementById('grant-loc-btn');
+  const retryBtn = document.getElementById('retry-loc-btn');
+  grntBtn.textContent='Requesting…'; grntBtn.disabled=true;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById('loc-modal').classList.remove('show');
+      document.getElementById('loc-banner').classList.add('show');
+      startLocationTracking(pos);
+    },
+    err => {
+      grntBtn.style.display='none'; retryBtn.style.display='block';
+      document.getElementById('loc-instructions').style.display='block';
+      grntBtn.disabled=false;
+      if (err.code===1) { // Permission denied — still continue game
+        document.getElementById('loc-modal').classList.remove('show');
+      }
+    },
+    { enableHighAccuracy:true, timeout:10000 }
+  );
+}
+
+function startLocationTracking(initialPos) {
+  const opts = { enableHighAccuracy:true, maximumAge:15000, timeout:15000 };
+  if (initialPos) sendLocation(initialPos);
+  locationWatchId = navigator.geolocation.watchPosition(
+    pos => { sendLocation(pos); updateLocUI(pos); },
+    null, opts
+  );
+  locationInterval = setInterval(() => {
+    if (locationWatchId===null) return;
+    navigator.geolocation.getCurrentPosition(sendLocation, null, opts);
+  }, 20000);
+}
+
+async function sendLocation(pos) {
+  if (!currentTeam) return;
+  try {
+    await db.collection('team_locations').doc(currentTeam.id).set({
+      teamName: currentTeam.teamName, teamId: currentTeam.id,
+      currentLocation: { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy },
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    // Also keep history
+    await db.collection('team_locations').doc(currentTeam.id).collection('history').add({
+      lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) { console.warn('Location update failed', e); }
+}
+
+function updateLocUI(pos) {
+  const t = document.getElementById('loc-status-text');
+  if (t) t.innerHTML=`<i class="fas fa-map-marker-alt" style="color:var(--ok);margin-right:5px"></i>📍 ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)} <span style="color:var(--tx3)">(±${pos.coords.accuracy?.toFixed(0)}m)</span>`;
+  document.getElementById('loc-banner-text').textContent=`Location tracking active · ±${pos.coords.accuracy?.toFixed(0)||'?'}m`;
+}
+
+function stopLocationTracking() {
+  if (locationWatchId!==null) { navigator.geolocation.clearWatch(locationWatchId); locationWatchId=null; }
+  if (locationInterval) { clearInterval(locationInterval); locationInterval=null; }
+}
+
+// ══════════════════════════════════════════
+// QR SCANNER
+// ══════════════════════════════════════════
+function openQR() { document.getElementById('qr-modal').classList.add('open'); }
+function closeQR() { stopQR(); document.getElementById('qr-modal').classList.remove('open'); }
+
+function startQR() {
+  const video = document.getElementById('qr-video');
+  document.getElementById('qr-start-btn').style.display='none';
+  document.getElementById('qr-stop-btn').style.display='';
+  document.getElementById('qr-status').innerHTML='<i class="fas fa-circle-notch fa-spin" style="margin-right:5px"></i>Starting camera…';
+  try {
+    qrScanner = new QrScanner(video, result => {
+      const text = result.data||result;
+      document.getElementById('qr-result-box').textContent=text;
+      document.getElementById('qr-result-box').style.display='block';
+      document.getElementById('qr-status').innerHTML=`<i class="fas fa-check-circle" style="color:var(--ok);margin-right:5px"></i>Detected! Copy the flag and paste into the clue form.`;
+      // Auto-fill last flag input if visible
+      const inputs = document.querySelectorAll('.flag-inp');
+      if (inputs.length) { inputs[inputs.length-1].value=text; inputs[inputs.length-1].focus(); }
+    }, { returnDetailedScanResult:true });
+    qrScanner.start().then(()=>{ document.getElementById('qr-status').innerHTML='<i class="fas fa-camera" style="color:var(--b);margin-right:5px"></i>Scanning…'; }).catch(e=>{ document.getElementById('qr-status').textContent='Camera error: '+e.message; });
+  } catch(e) { document.getElementById('qr-status').textContent='QR Scanner not available'; }
+}
+
+function stopQR() {
+  if (qrScanner) { qrScanner.stop(); qrScanner.destroy(); qrScanner=null; }
+  document.getElementById('qr-start-btn').style.display='';
+  document.getElementById('qr-stop-btn').style.display='none';
+  document.getElementById('qr-status').innerHTML='<i class="fas fa-camera" style="margin-right:5px"></i>Start scanner and point at QR code';
+  document.getElementById('qr-result-box').style.display='none';
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name==='lb') loadLeaderboard();
+  if (name==='profile') renderProfile();
+  if (name==='feed') {} // already live
+}
+
+// ══════════════════════════════════════════
+// THEME TOGGLE
+// ══════════════════════════════════════════
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark?'':'light');
+  document.getElementById('theme-btn').querySelector('i').className = isDark?'fas fa-sun theme-icon':'fas fa-moon theme-icon';
+}
+
+// Modals
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
